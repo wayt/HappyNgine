@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Misc ignore
+.DS_Store
+*.swp
