@@ -4,9 +4,6 @@ import (
     "net/http"
 )
 
-type API struct {
-}
-
 type Context struct{
 
     Request *http.Request
