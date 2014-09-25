@@ -7,6 +7,7 @@ import (
 )
 
 type API struct {
+    Middlewares []MiddlewareHandler
     Resources map[string]interface{}
     Routes []*Route
 }
@@ -19,24 +20,28 @@ func NewAPI() *API {
     return this
 }
 
-func(this *API) AddResource(name string, resource interface{}) {
+func (this *API) AddResource(name string, resource interface{}) {
 
     this.Resources[name] = resource
 }
 
-func(this *API) GetResource(name string) interface{} {
+func (this *API) GetResource(name string) interface{} {
 
     return this.Resources[name]
 }
 
-func(this *API) AddRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) {
+func (this *API) AddRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) {
 
     this.Routes = append(this.Routes, NewRoute(method, path, actionHandler, middlewares))
 }
 
+func (this *API) AddMiddleware(middlewareHandler MiddlewareHandler) {
+
+    this.Middlewares = append(this.Middlewares, middlewareHandler)
+}
+
 func (this *API) findRouteForRequest(req *http.Request) (*Route, error) {
 
-    // Search for query route
     for _, r := range this.Routes {
 
         if r.Path == req.URL.Path && r.Method == req.Method {
@@ -63,7 +68,7 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
     var middlewares []*Middleware
 
-    for _, middlewareHandler := range route.Middlewares {
+    for _, middlewareHandler := range append(this.Middlewares, route.Middlewares) {
 
         m := middlewareHandler(context)
         middlewares = append(middlewares, m)
@@ -89,9 +94,9 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
     }
 }
 
-func(this *API) Run() {
+func (this *API) Run(host string) {
 
     fmt.Println("Let's goooo")
 
-    http.ListenAndServe(":8000", this)
+    http.ListenAndServe(host, this)
 }

@@ -1,18 +1,14 @@
 package happy
 
-type ActionHandler func(*Context) *Action
+type ActionHandler func(*Context) ActionInterface
+
+type ActionInterface interface {
+
+    IsValid() bool
+    Run()
+}
 
 type Action struct {
 
     Context *Context
-
-}
-
-func (this *Action) IsValid() bool {
-
-    return true
-}
-
-func (this *Action) Run() {
-
 }
