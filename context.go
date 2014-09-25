@@ -7,11 +7,11 @@ import (
 type Context struct{
 
     Request *http.Request
-    Response *http.Response
+    Response http.ResponseWriter
     API *API
 }
 
-func NewContext(req *http.Request, resp *http.Response, api *API) *Context {
+func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
 
     this := new(Context)
 
