@@ -1,7 +1,6 @@
 package happy
 
 import (
-    "fmt"
     "github.com/gohappy/happy/validator"
 )
 

@@ -9,6 +9,7 @@ type Context struct{
     Request *http.Request
     Response http.ResponseWriter
     API *API
+    Middlewares []MiddlewareInterface
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
