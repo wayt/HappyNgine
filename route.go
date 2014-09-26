@@ -7,7 +7,7 @@ type Route struct {
     Middlewares []MiddlewareHandler
 }
 
-func NewRoute(method string, path string, actionHandler ActionHandler, middlewares []MiddlewareHandler) *Route {
+func NewRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) *Route {
 
     this := new(Route)
     this.Method = method
