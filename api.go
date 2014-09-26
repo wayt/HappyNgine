@@ -3,13 +3,12 @@ package happy
 import (
     "fmt"
     "net/http"
-    "errors"
 )
 
 type API struct {
     Middlewares []MiddlewareHandler
     Resources map[string]interface{}
-    Routes []*Route
+    Router Router
 }
 
 func NewAPI() *API {
@@ -32,7 +31,7 @@ func (this *API) GetResource(name string) interface{} {
 
 func (this *API) AddRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) {
 
-    this.Routes = append(this.Routes, NewRoute(method, path, actionHandler, middlewares))
+    this.Router.AddRoute(NewRoute(method, path, actionHandler, middlewares))
 }
 
 func (this *API) AddMiddleware(middlewareHandler MiddlewareHandler) {
@@ -40,43 +39,22 @@ func (this *API) AddMiddleware(middlewareHandler MiddlewareHandler) {
     this.Middlewares = append(this.Middlewares, middlewareHandler)
 }
 
-func (this *API) findRouteForRequest(req *http.Request) (*Route, error) {
-
-    for _, r := range this.Routes {
-
-        if r.Path == req.URL.Path && r.Method == req.Method {
-
-            return r, nil
-        }
-    }
-
-    return nil, errors.New("No route")
-}
-
-func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-    fmt.Println(req.Method, ":", req.URL)
-
-    context := NewContext(req, resp, this)
-
-    route, err := this.findRouteForRequest(req)
-    if err != nil {
-
-        resp.WriteHeader(404)
-        resp.Write([]byte("Not found"))
-        return
-    }
-
-    var middlewares []MiddlewareInterface
+func (this *API) preDispatch(route *Route, context *Context) error {
 
     for _, middlewareHandler := range append(this.Middlewares, route.Middlewares...) {
 
         m := middlewareHandler(context)
-        middlewares = append(middlewares, m)
+        context.Middlewares = append(context.Middlewares, m)
         if err := m.HandleBefore(); err != nil {
 
-            return
+            return err
         }
     }
+
+    return nil
+}
+
+func (this *API) dispatch(route *Route, context *Context) {
 
     action := route.ActionHandler(context)
 
@@ -84,13 +62,43 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
         action.Run()
     }
+}
 
-    for _, m := range middlewares {
+func (this *API) postDispatch(context *Context) error {
+
+    for _, m := range context.Middlewares {
 
         if err := m.HandleAfter(); err != nil {
 
-            return
+            return err
         }
+    }
+
+    return nil
+}
+
+
+func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+    fmt.Println(req.Method, ":", req.URL)
+
+    context := NewContext(req, resp, this)
+
+    route, err := this.Router.FindRoute(req)
+    if err != nil {
+
+        resp.WriteHeader(404)
+        resp.Write([]byte("Not found"))
+        return
+    }
+
+    if err := this.preDispatch(route, context); err != nil {
+        return
+    }
+
+    this.dispatch(route, context)
+
+    if err := this.postDispatch(context); err != nil {
+        return
     }
 }
 

@@ -1,8 +1,12 @@
 package happy
 
+import (
+    "regexp"
+)
+
 type Route struct {
     Method string
-    Path string
+    Path *regexp.Regexp
     ActionHandler ActionHandler
     Middlewares []MiddlewareHandler
 }
@@ -11,7 +15,10 @@ func NewRoute(method string, path string, actionHandler ActionHandler, middlewar
 
     this := new(Route)
     this.Method = method
-    this.Path = path
+    var err error
+    if this.Path, err = regexp.Compile(path); err != nil {
+        panic(err)
+    }
     this.ActionHandler = actionHandler
     this.Middlewares = middlewares
 
