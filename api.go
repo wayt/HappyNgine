@@ -66,9 +66,9 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
         return
     }
 
-    var middlewares []*Middleware
+    var middlewares []MiddlewareInterface
 
-    for _, middlewareHandler := range append(this.Middlewares, route.Middlewares) {
+    for _, middlewareHandler := range append(this.Middlewares, route.Middlewares...) {
 
         m := middlewareHandler(context)
         middlewares = append(middlewares, m)
