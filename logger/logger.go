@@ -62,7 +62,7 @@ func (this *Logger) log(flags int, prefix string, msg string) {
 
         if (w.Flags & flags) != 0 {
 
-            _, err := w.Out.WriteString("[" + now + "][" + prefix + "]: " + msg + "\n")
+            _, err := w.Out.WriteString("[" + now + "][" + prefix + "]: " + msg)
 
             if err != nil {
                 fmt.Println("LoggerError: ", err)
