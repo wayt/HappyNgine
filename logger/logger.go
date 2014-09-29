@@ -72,9 +72,9 @@ func (this *Logger) log(flags int, prefix string, msg string) {
     }
 }
 
-func (this *Logger) Debug(msg string) {
+func (this *Logger) Debug(v ...interface{}) {
 
-    this.log(LOG_DEBUG, "DEBUG", msg)
+    this.log(LOG_DEBUG, "DEBUG", fmt.Sprint(v...))
 }
 
 func (this *Logger) Debugf(msg string, v ...interface{}) {
@@ -87,9 +87,9 @@ func (this *Logger) Debugln(v ...interface{}) {
     this.Debug(fmt.Sprintln(v...))
 }
 
-func (this *Logger) Fatal(msg string) {
+func (this *Logger) Fatal(v ...interface{}) {
 
-    this.log(LOG_FATAL, "FATAL", msg)
+    this.log(LOG_FATAL, "FATAL", fmt.Sprint(v...))
 }
 
 func (this *Logger) Fatalf(msg string, v ...interface{}) {
@@ -102,9 +102,9 @@ func (this *Logger) Fatalln(v ...interface{}) {
     this.Fatal(fmt.Sprintln(v...))
 }
 
-func (this *Logger) Error(msg string) {
+func (this *Logger) Error(v ...interface{}) {
 
-    this.log(LOG_ERROR, "ERROR", msg)
+    this.log(LOG_ERROR, "ERROR", fmt.Sprint(v...))
 }
 
 func (this *Logger) Errorf(msg string, v ...interface{}) {
@@ -117,9 +117,9 @@ func (this *Logger) Errorln(v ...interface{}) {
     this.Error(fmt.Sprintln(v...))
 }
 
-func (this *Logger) Info(msg string) {
+func (this *Logger) Info(v ...interface{}) {
 
-    this.log(LOG_INFO, "INFO", msg)
+    this.log(LOG_INFO, "INFO", fmt.Sprint(v...))
 }
 
 func (this *Logger) Infof(msg string, v ...interface{}) {
