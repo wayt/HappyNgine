@@ -107,7 +107,7 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
     }
 }
 
-func (this *API) Run(host string) {
+func (this *API) Run(host string) error {
 
-    http.ListenAndServe(host, this)
+    return http.ListenAndServe(host, this)
 }
