@@ -2,7 +2,6 @@ package happy
 
 import (
     "net/http"
-    "net/url"
     "errors"
 )
 
@@ -17,18 +16,15 @@ func (this *Router) AddRoute(route *Route) {
 
 func (this *Router) addRequestParam(req *http.Request, route *Route, matches []string) {
 
+    req.ParseForm()
+
     if len(matches) > 0 && matches[0] == req.URL.Path {
-
-        if req.PostForm == nil {
-
-            req.PostForm = url.Values{}
-        }
 
         for i, name := range route.Path.SubexpNames() {
 
             if len(name) > 0 {
 
-                req.PostForm.Add(name, matches[i])
+                req.Form.Add(name, matches[i])
             }
         }
     }
