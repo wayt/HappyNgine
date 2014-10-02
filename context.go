@@ -10,6 +10,7 @@ type Context struct{
     Response http.ResponseWriter
     API *API
     Middlewares []MiddlewareInterface
+    UserData map[string]map[string]interface{}
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -19,6 +20,7 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
     this.Request = req
     this.Response = resp
     this.API = api
+    this.UserData = make(map[string]map[string]interface{})
 
     return this
 }

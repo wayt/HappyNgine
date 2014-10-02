@@ -30,7 +30,10 @@ func (this *API) AddResource(name string, resource interface{}) {
 
 func (this *API) GetResource(name string) interface{} {
 
-    return this.Resources[name]
+    if val, ok := this.Resources[name]; ok {
+        return val
+    }
+    return nil
 }
 
 func (this *API) AddRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) {
