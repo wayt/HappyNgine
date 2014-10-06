@@ -2,6 +2,7 @@ package validator
 
 import (
     "errors"
+    "regexp"
 )
 
 
@@ -31,10 +32,44 @@ func (this *Validator) IsValid(data string) error {
     return errors.New(this.ErrorMessage)
 }
 
-func IsEqual(reference string) ValidatorHandler {
+func IsEqual(references ...string) ValidatorHandler {
 
     return func(value string) bool {
 
-        return reference == value
+        for _, reference := range references {
+
+            if reference == value {
+
+                return true
+            }
+        }
+        return false
     }
+}
+
+func IsNotEmpty() ValidatorHandler {
+
+    return func(value string) bool {
+
+        if len(value) > 0 {
+
+            return true
+        }
+        return false
+    }
+}
+
+func Regexp(pattern string) ValidatorHandler {
+
+    return func(value string) bool {
+
+        r, _ := regexp.Compile(pattern)
+
+        return r.MatchString(value)
+    }
+}
+
+func IsEmail() ValidatorHandler {
+
+    return Regexp(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+`)
 }
