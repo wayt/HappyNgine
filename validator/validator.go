@@ -3,6 +3,7 @@ package validator
 import (
     "errors"
     "regexp"
+    "time"
 )
 
 
@@ -72,4 +73,17 @@ func Regexp(pattern string) ValidatorHandler {
 func IsEmail() ValidatorHandler {
 
     return Regexp(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+`)
+}
+
+func IsDate() ValidatorHandler {
+
+    return func(value string) bool {
+
+        _, err := time.Parse("2006-01-02", value)
+        if err != nil {
+
+            return false
+        }
+        return true
+    }
 }

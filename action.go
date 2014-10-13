@@ -15,7 +15,7 @@ type Action struct {
 
     Context *Context
     Parameters []*Parameter
-    Errors []error
+    Errors []string
 }
 
 func (this *Action) IsValid() bool {
@@ -29,7 +29,7 @@ func (this *Action) IsValid() bool {
         err := parameter.IsValid(request.FormValue(name))
         if err != nil {
 
-            this.Errors = append(this.Errors, err)
+            this.Errors = append(this.Errors, err.Error())
             isValid = false
         }
     }
