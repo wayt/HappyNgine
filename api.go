@@ -3,6 +3,7 @@ package happy
 import (
     "net/http"
     "fmt"
+    "strings"
 )
 
 type ErrorHandler func (*Context)
@@ -70,7 +71,18 @@ func (this *API) preDispatch(route *Route, context *Context) error {
 func (this *API) dispatch(route *Route, context *Context) {
 
     action := route.ActionHandler(context)
-    action.Run()
+
+    if action.IsValid() {
+
+        action.Run()
+    }
+
+    errors, code := action.GetErrors()
+    if len(errors) != 0 {
+
+        response := `{"errors":["` + strings.Join(errors, `","`) + `"]}`
+        action.Send(code, response)
+    }
 }
 
 func (this *API) postDispatch(context *Context) error {
