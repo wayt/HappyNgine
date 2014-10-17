@@ -59,11 +59,10 @@ func (this *Action) AddError(code int, text string) {
 
 func (this *Action) GetParam(key string) string {
 
-    return this.Context.Request.FormValue(key)
+    return this.Context.GetParam(key)
 }
 
 func (this *Action) Send(code int, text string) {
 
-        this.Context.Response.WriteHeader(code)
-        this.Context.Response.Write([]byte(text))
+    this.Context.Send(code, text)
 }

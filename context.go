@@ -24,3 +24,14 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 
     return this
 }
+
+func (this *Context) GetParam(key string) string {
+
+    return this.Request.FormValue(key)
+}
+
+func (this *Context) Send(code int, text string) {
+
+        this.Response.WriteHeader(code)
+        this.Response.Write([]byte(text))
+}
