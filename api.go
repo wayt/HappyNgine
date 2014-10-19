@@ -80,7 +80,7 @@ func (this *API) dispatch(route *Route, context *Context) {
     errors, code := action.GetErrors()
     if len(errors) != 0 {
 
-        response := `{"errors":["` + strings.Join(errors, `","`) + `"]}`
+        response := `{"error":["` + strings.Join(errors, `","`) + `"]}`
         action.Send(code, response)
     }
 }

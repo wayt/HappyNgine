@@ -46,9 +46,9 @@ func (this *Action) GetErrors() ([]string, int) {
     return this.Errors, this.ErrorCode
 }
 
-func (this *Action) AddParameter(name string, validators ...*validator.Validator) {
+func (this *Action) AddParameter(name string, required bool, validators ...*validator.Validator) {
 
-    this.Parameters = append(this.Parameters, NewParameter(name, validators...))
+    this.Parameters = append(this.Parameters, NewParameter(name, required, validators...))
 }
 
 func (this *Action) AddError(code int, text string) {
