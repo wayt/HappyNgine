@@ -2,7 +2,6 @@ package happy
 
 import (
     "net/http"
-    "fmt"
     "strings"
 )
 
@@ -100,7 +99,6 @@ func (this *API) postDispatch(context *Context) error {
 
 
 func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-    fmt.Println(req.Method, ":", req.URL)
 
     context := NewContext(req, resp, this)
 
