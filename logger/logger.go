@@ -18,6 +18,7 @@ const (
     LOG_FATAL       = 2
     LOG_ERROR       = 4
     LOG_INFO        = 8
+    LOG_ACCESS      = 16
 )
 
 type Logger struct{
@@ -130,6 +131,21 @@ func (this *Logger) Infof(msg string, v ...interface{}) {
 func (this *Logger) Infoln(v ...interface{}) {
 
     this.Info(fmt.Sprintln(v...))
+}
+
+func (this *Logger) Access(v ...interface{}) {
+
+    this.log(LOG_INFO, "ACCESS", fmt.Sprint(v...))
+}
+
+func (this *Logger) Accessf(msg string, v ...interface{}) {
+
+    this.Access(fmt.Sprintf(msg, v...))
+}
+
+func (this *Logger) Accessln(v ...interface{}) {
+
+    this.Access(fmt.Sprintln(v...))
 }
 
 
