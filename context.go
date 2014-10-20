@@ -11,6 +11,7 @@ type Context struct{
     API *API
     Middlewares []MiddlewareInterface
     UserData map[string]map[string]interface{}
+    ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -21,6 +22,7 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
     this.Response = resp
     this.API = api
     this.UserData = make(map[string]map[string]interface{})
+    this.ResponseStatusCode = 200
 
     return this
 }
@@ -34,4 +36,5 @@ func (this *Context) Send(code int, text string) {
 
         this.Response.WriteHeader(code)
         this.Response.Write([]byte(text))
+        this.ResponseStatusCode = code
 }

@@ -135,7 +135,7 @@ func (this *Logger) Infoln(v ...interface{}) {
 
 func (this *Logger) Access(v ...interface{}) {
 
-    this.log(LOG_INFO, "ACCESS", fmt.Sprint(v...))
+    this.log(LOG_ACCESS, "ACCESS", fmt.Sprint(v...))
 }
 
 func (this *Logger) Accessf(msg string, v ...interface{}) {
