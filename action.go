@@ -11,7 +11,7 @@ type ActionInterface interface {
     Run()
     IsValid() bool
     GetErrors() ([]string, int)
-    Send(int, string)
+    Send(int, string, ...string)
 }
 
 type Action struct {
@@ -62,7 +62,7 @@ func (this *Action) GetParam(key string) string {
     return this.Context.GetParam(key)
 }
 
-func (this *Action) Send(code int, text string) {
+func (this *Action) Send(code int, text string, headers ...string) {
 
-    this.Context.Send(code, text)
+    this.Context.Send(code, text, headers...)
 }
