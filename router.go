@@ -3,6 +3,9 @@ package happy
 import (
     "net/http"
     "errors"
+    "fmt"
+    "io/ioutil"
+    "encoding/json"
 )
 
 type Router struct {
@@ -14,9 +17,33 @@ func (this *Router) AddRoute(route *Route) {
     this.Routes = append(this.Routes, route)
 }
 
-func (this *Router) addRequestParam(req *http.Request, route *Route, matches []string) {
+func getMimeType(req *http.Request) string {
 
+    return req.Header.Get("Content-Type")
+}
+
+func parseJsonBody(req *http.Request) {
+
+    body, _ := ioutil.ReadAll(req.Body)
+
+    bodyMap := make(map[string]interface{})
+    json.Unmarshal(body, &bodyMap)
+
+    for k, v := range bodyMap {
+
+        req.Form.Add(k, fmt.Sprintf("%v", v))
+    }
+
+}
+
+func (this *Router) parseRequestParams(req *http.Request, route *Route, matches []string) {
+
+    // This will create the req.Form object
     req.ParseForm()
+
+    switch getMimeType(req) {
+        case "application/json": parseJsonBody(req)
+    }
 
     if len(matches) > 0 && matches[0] == req.URL.Path {
 
@@ -39,7 +66,7 @@ func (this *Router) FindRoute(req *http.Request) (*Route, error) {
             matches := r.Path.FindStringSubmatch(req.URL.Path)
             if matches != nil {
 
-                this.addRequestParam(req, r, matches)
+                this.parseRequestParams(req, r, matches)
 
                 return r, nil
             }
