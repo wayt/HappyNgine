@@ -75,6 +75,11 @@ func IsEmail() ValidatorHandler {
     return Regexp(`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+`)
 }
 
+func IsNumber() ValidatorHandler {
+
+    return Regexp(`(-|)[0-9]+`)
+}
+
 func IsDate() ValidatorHandler {
 
     return func(value string) bool {

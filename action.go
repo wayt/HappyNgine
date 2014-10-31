@@ -62,6 +62,11 @@ func (this *Action) GetParam(key string) string {
     return this.Context.GetParam(key)
 }
 
+func (this *Action) GetIntParam(key string) int {
+
+    return this.Context.GetIntParam(key)
+}
+
 func (this *Action) Send(code int, text string, headers ...string) {
 
     this.Context.Send(code, text, headers...)

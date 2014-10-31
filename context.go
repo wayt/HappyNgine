@@ -3,6 +3,7 @@ package happy
 import (
     "net/http"
     "strings"
+    "strconv"
 )
 
 type Context struct{
@@ -31,6 +32,16 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 func (this *Context) GetParam(key string) string {
 
     return this.Request.FormValue(key)
+}
+
+func (this *Context) GetIntParam(key string) int {
+
+    value, err := strconv.Atoi(this.Request.FormValue(key))
+    if err != nil {
+        return 0
+    }
+
+    return value
 }
 
 func (this *Context) Send(code int, text string, headers ...string) {
