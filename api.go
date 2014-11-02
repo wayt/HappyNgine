@@ -86,17 +86,12 @@ func (this *API) dispatch(route *Route, context *Context) {
     }
 }
 
-func (this *API) postDispatch(context *Context) error {
+func (this *API) postDispatch(context *Context) {
 
     for _, m := range context.Middlewares {
 
-        if err := m.HandleAfter(); err != nil {
-
-            return err
-        }
+        m.HandleAfter()
     }
-
-    return nil
 }
 
 
@@ -112,14 +107,15 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
     }
 
     if err := this.preDispatch(route, context); err != nil {
+
+        // Excute HandleAfter for executed middleware
+        this.postDispatch(context)
         return
     }
 
     this.dispatch(route, context)
 
-    if err := this.postDispatch(context); err != nil {
-        return
-    }
+    this.postDispatch(context)
 }
 
 func (this *API) Run(host string) error {
