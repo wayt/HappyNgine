@@ -5,6 +5,9 @@ import (
     "os"
     "bufio"
     "fmt"
+    "errors"
+    "strings"
+    "sync"
 )
 
 type writer struct {
@@ -24,11 +27,15 @@ const (
 type Logger struct{
 
     Writers []writer
+
+    Mutex *sync.Mutex
 }
 
 func New() *Logger {
 
     this := &Logger{}
+
+    this.Mutex = &sync.Mutex{}
 
     return this
 }
@@ -57,6 +64,8 @@ func (this *Logger) AddOutput(out *bufio.Writer, flags int) {
 
 func (this *Logger) log(flags int, prefix string, msg string) {
 
+    this.Mutex.Lock()
+
     now := time.Now().Format(time.RFC3339)
 
     for _, w := range this.Writers {
@@ -71,6 +80,8 @@ func (this *Logger) log(flags int, prefix string, msg string) {
             w.Out.Flush()
         }
     }
+
+    this.Mutex.Unlock()
 }
 
 func (this *Logger) Debug(v ...interface{}) {
@@ -103,19 +114,22 @@ func (this *Logger) Fatalln(v ...interface{}) {
     this.Fatal(fmt.Sprintln(v...))
 }
 
-func (this *Logger) Error(v ...interface{}) {
+func (this *Logger) Error(v ...interface{}) error {
 
-    this.log(LOG_ERROR, "ERROR", fmt.Sprint(v...))
+    text := fmt.Sprint(v...)
+    this.log(LOG_ERROR, "ERROR", text)
+
+    return errors.New(strings.TrimSuffix(text, "\n"))
 }
 
-func (this *Logger) Errorf(msg string, v ...interface{}) {
+func (this *Logger) Errorf(msg string, v ...interface{}) error {
 
-    this.Error(fmt.Sprintf(msg, v...))
+    return this.Error(fmt.Sprintf(msg, v...))
 }
 
-func (this *Logger) Errorln(v ...interface{}) {
+func (this *Logger) Errorln(v ...interface{}) error {
 
-    this.Error(fmt.Sprintln(v...))
+    return this.Error(fmt.Sprintln(v...))
 }
 
 func (this *Logger) Info(v ...interface{}) {
