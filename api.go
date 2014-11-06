@@ -38,8 +38,6 @@ func (this *API) GetResource(name string) interface{} {
 
 func (this *API) AddRoute(method string, path string, actionHandler ActionHandler, middlewares ...MiddlewareHandler) {
 
-    // Add regexp delimiter to avoid path exploit
-    path = `^` + path + `$`;
     this.Router.AddRoute(NewRoute(method, path, actionHandler, middlewares...))
 }
 
