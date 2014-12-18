@@ -2,13 +2,11 @@ package happy
 
 type MiddlewareHandler func(*Context) MiddlewareInterface
 
-type MiddlewareInterface interface{
-
-    HandleBefore() error
-    HandleAfter() error
+type MiddlewareInterface interface {
+	HandleBefore() error
+	HandleAfter() error
 }
 
-type Middleware struct{
-
-    Context *Context
+type Middleware struct {
+	Context *Context
 }

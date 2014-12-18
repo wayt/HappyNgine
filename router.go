@@ -1,77 +1,82 @@
 package happy
 
 import (
-    "net/http"
-    "errors"
-    "fmt"
-    "io/ioutil"
-    "encoding/json"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 type Router struct {
-    Routes []*Route
+	Routes []*Route
 }
 
 func (this *Router) AddRoute(route *Route) {
 
-    this.Routes = append(this.Routes, route)
+	this.Routes = append(this.Routes, route)
 }
 
 func getMimeType(req *http.Request) string {
 
-    return req.Header.Get("Content-Type")
+	return req.Header.Get("Content-Type")
 }
 
 func parseJsonBody(req *http.Request) {
 
-    body, _ := ioutil.ReadAll(req.Body)
+	body, _ := ioutil.ReadAll(req.Body)
 
-    bodyMap := make(map[string]interface{})
-    json.Unmarshal(body, &bodyMap)
+	bodyMap := make(map[string]interface{})
+	json.Unmarshal(body, &bodyMap)
 
-    for k, v := range bodyMap {
+	for k, v := range bodyMap {
 
-        req.Form.Add(k, fmt.Sprintf("%v", v))
-    }
+		req.Form.Add(k, fmt.Sprintf("%v", v))
+	}
 
 }
 
 func (this *Router) parseRequestParams(req *http.Request, route *Route, matches []string) {
 
-    // This will create the req.Form object
-    req.ParseForm()
+	// This will create the req.Form object
+	req.ParseForm()
 
-    switch getMimeType(req) {
-        case "application/json": parseJsonBody(req)
-    }
+	mime := getMimeType(req)
 
-    if len(matches) > 0 && matches[0] == req.URL.Path {
+	// Handle json input data
+	if strings.Index(mime, "application/json") != -1 {
 
-        for i, name := range route.Path.SubexpNames() {
+		parseJsonBody(req)
+	}
 
-            if len(name) > 0 {
+	if len(matches) > 0 && matches[0] == req.URL.Path {
 
-                req.Form.Add(name, matches[i])
-            }
-        }
-    }
+		for i, name := range route.Path.SubexpNames() {
+
+			if len(name) > 0 {
+
+				req.Form.Add(name, matches[i])
+			}
+		}
+	}
 }
 
 func (this *Router) FindRoute(req *http.Request) (*Route, error) {
 
-    for _, r := range this.Routes {
+	for _, r := range this.Routes {
 
-        if r.Method == req.Method {
+		if r.Method == req.Method {
 
-            matches := r.Path.FindStringSubmatch(req.URL.Path)
-            if matches != nil {
+			matches := r.Path.FindStringSubmatch(req.URL.Path)
+			if matches != nil {
 
-                this.parseRequestParams(req, r, matches)
+				this.parseRequestParams(req, r, matches)
 
-                return r, nil
-            }
-        }
-    }
+				return r, nil
+			}
+		}
+	}
 
-    return nil, errors.New("No route")
+	return nil, errors.New("No route")
 }
