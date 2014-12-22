@@ -43,6 +43,16 @@ func (this *Context) GetIntParam(key string) int {
 	return value
 }
 
+func (this *Context) GetInt64Param(key string) int64 {
+
+	value, err := strconv.ParseInt(this.Request.FormValue(key), 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return value
+}
+
 func (this *Context) Send(code int, text string, headers ...string) {
 
 	hasMime := false
