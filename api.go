@@ -5,20 +5,22 @@ import (
 	"strings"
 )
 
-type ErrorHandler func(*Context)
+type ErrorHandler func(*Context, interface{})
 
 type API struct {
-	Middlewares  []MiddlewareHandler
-	Resources    map[string]interface{}
-	ErrorHandler ErrorHandler
-	Router       Router
+	Middlewares     []MiddlewareHandler
+	Resources       map[string]interface{}
+	Error404Handler ErrorHandler
+	PanicHandler    ErrorHandler
+	Router          Router
 }
 
 func NewAPI() *API {
 
 	this := new(API)
 	this.Resources = make(map[string]interface{})
-	this.ErrorHandler = this.errorHandler
+	this.Error404Handler = this.error404Handler
+	this.PanicHandler = this.panicHandler
 
 	return this
 }
@@ -46,10 +48,16 @@ func (this *API) AddMiddleware(middlewareHandler MiddlewareHandler) {
 	this.Middlewares = append(this.Middlewares, middlewareHandler)
 }
 
-func (this *API) errorHandler(context *Context) {
+func (this *API) error404Handler(context *Context, err interface{}) {
 
 	context.Response.WriteHeader(404)
 	context.Response.Write([]byte("404 Not Found"))
+}
+
+func (this *API) panicHandler(context *Context, err interface{}) {
+
+	context.Response.WriteHeader(500)
+	context.Response.Write([]byte("Internal Server Error"))
 }
 
 func (this *API) preDispatch(route *Route, context *Context) error {
@@ -96,10 +104,18 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 	context := NewContext(req, resp, this)
 
+	// Panic handler
+	defer func() {
+		if r := recover(); r != nil {
+
+			this.PanicHandler(context, r)
+		}
+	}()
+
 	route, err := this.Router.FindRoute(req)
 	if err != nil {
 
-		this.ErrorHandler(context)
+		this.Error404Handler(context, err)
 		return
 	}
 
