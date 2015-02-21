@@ -131,7 +131,7 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	this.postDispatch(context)
 }
 
-func (this *API) Run(host string) error {
+func (this *API) Run() {
 
-	return http.ListenAndServe(host, this)
+	http.HandleFunc("/", this.ServeHTTP)
 }
