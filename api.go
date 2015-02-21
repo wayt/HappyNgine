@@ -133,5 +133,6 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 func (this *API) Run(host string) error {
 
-	return http.ListenAndServe(host, this)
+	http.HandleFunc("/", this.ServeHTTP)
+	return nil
 }
