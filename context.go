@@ -74,6 +74,10 @@ func (this *Context) Send(code int, text string, headers ...string) {
 		this.Response.Header().Add("Content-Type", "application/json")
 	}
 
+	if this.API.AllowOrigin != "" {
+		this.Response.Header().Add("Access-Control-Allow-Origin", this.API.AllowOrigin)
+	}
+
 	this.Response.WriteHeader(code)
 	this.Response.Write([]byte(text))
 	this.ResponseStatusCode = code
