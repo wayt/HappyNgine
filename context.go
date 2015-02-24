@@ -11,7 +11,7 @@ type Context struct {
 	Response           http.ResponseWriter
 	API                *API
 	Middlewares        []MiddlewareInterface
-	UserData           map[string]map[string]interface{}
+	UserData           map[string]interface{}
 	ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
 }
 
@@ -22,7 +22,7 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 	this.Request = req
 	this.Response = resp
 	this.API = api
-	this.UserData = make(map[string]map[string]interface{})
+	this.UserData = make(map[string]interface{})
 	this.ResponseStatusCode = 200
 
 	return this
