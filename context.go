@@ -74,8 +74,8 @@ func (this *Context) Send(code int, text string, headers ...string) {
 		this.Response.Header().Add("Content-Type", "application/json")
 	}
 
-	if this.API.AllowOrigin != "" {
-		this.Response.Header().Add("Access-Control-Allow-Origin", this.API.AllowOrigin)
+	for k, v := range this.API.Headers {
+		this.Response.Header().Add(k, v)
 	}
 
 	this.Response.WriteHeader(code)

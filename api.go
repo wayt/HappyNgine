@@ -13,7 +13,7 @@ type API struct {
 	Error404Handler ErrorHandler
 	PanicHandler    ErrorHandler
 	Router          Router
-	AllowOrigin     string
+	Headers         map[string]string
 }
 
 func NewAPI() *API {
@@ -22,7 +22,7 @@ func NewAPI() *API {
 	this.Resources = make(map[string]interface{})
 	this.Error404Handler = this.error404Handler
 	this.PanicHandler = this.panicHandler
-	this.AllowOrigin = ""
+	this.Headers = make(map[string]string)
 
 	return this
 }
