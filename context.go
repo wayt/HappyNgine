@@ -82,3 +82,14 @@ func (this *Context) Send(code int, text string, headers ...string) {
 	this.Response.Write([]byte(text))
 	this.ResponseStatusCode = code
 }
+
+func (this *Context) RemoteIP() string {
+
+	ipStr := strings.SplitN(this.Request.RemoteAddr, ":", 1)[0]
+
+	if header := this.Request.Header.Get("X-Forwarded-For"); len(header) != 0 {
+		ipStr = header
+	}
+
+	return ipStr
+}
