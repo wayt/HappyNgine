@@ -70,6 +70,21 @@ func (this *Action) GetInt64Param(key string) int64 {
 	return this.Context.GetInt64Param(key)
 }
 
+func (this *Action) GetURLParam(key string) string {
+
+	return this.Context.GetURLParam(key)
+}
+
+func (this *Action) GetURLIntParam(key string) int {
+
+	return this.Context.GetURLIntParam(key)
+}
+
+func (this *Action) GetURLInt64Param(key string) int64 {
+
+	return this.Context.GetURLInt64Param(key)
+}
+
 func (this *Action) Send(code int, text string, headers ...string) {
 
 	this.Context.Send(code, text, headers...)

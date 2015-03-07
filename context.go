@@ -53,6 +53,30 @@ func (this *Context) GetInt64Param(key string) int64 {
 	return value
 }
 
+func (this *Context) GetURLParam(key string) string {
+
+	return this.Request.URL.Query().Get(key)
+}
+
+func (this *Context) GetURLIntParam(key string) int {
+
+	value, err := strconv.Atoi(this.GetURLParam(key))
+	if err != nil {
+		return 0
+	}
+	return value
+}
+
+func (this *Context) GetURLInt64Param(key string) int64 {
+
+	value, err := strconv.ParseInt(this.GetURLParam(key), 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return value
+}
+
 func (this *Context) Send(code int, text string, headers ...string) {
 
 	hasMime := false
