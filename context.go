@@ -2,6 +2,7 @@ package happy
 
 import (
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -99,6 +100,13 @@ func (this *Context) Send(code int, text string, headers ...string) {
 	}
 
 	for k, v := range this.API.Headers {
+
+		matchs := regexp.MustCompile(`^{(.*)}$`).FindStringSubmatch(v)
+		if len(matchs) != 0 {
+			header := matchs[1]
+			v = this.Request.Header.Get(header)
+		}
+
 		this.Response.Header().Add(k, v)
 	}
 
