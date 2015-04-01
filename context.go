@@ -104,7 +104,9 @@ func (this *Context) Send(code int, text string, headers ...string) {
 		matchs := regexp.MustCompile(`^{(.*)}$`).FindStringSubmatch(v)
 		if len(matchs) != 0 {
 			header := matchs[1]
-			v = this.Request.Header.Get(header)
+			if v = this.Request.Header.Get(header); len(v) == 0 {
+				continue
+			}
 		}
 
 		this.Response.Header().Add(k, v)
