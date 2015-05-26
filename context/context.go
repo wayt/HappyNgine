@@ -1,7 +1,8 @@
-package happy
+package context
 
 import (
-	"net/http"
+	"code.google.com/p/go-uuid/uuid"
+	"github.com/gohappy/happy/env"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,17 +15,19 @@ type Context struct {
 	Middlewares        []MiddlewareInterface
 	UserData           map[string]interface{}
 	ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
+	RequestId          string
 }
 
-func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
+func NewContext(req *http.Request, resp http.ResponseWriter) *Context {
 
 	this := new(Context)
 
 	this.Request = req
 	this.Response = resp
-	this.API = api
 	this.UserData = make(map[string]interface{})
 	this.ResponseStatusCode = 200
+
+	this.RequestId = uuid.New()
 
 	return this
 }
@@ -93,6 +96,11 @@ func (this *Context) Send(code int, text string, headers ...string) {
 		if array[0] == "Content-Type" {
 			hasMime = true
 		}
+	}
+
+	this.Response.Header().Add("X-happyngine-request-id", this.RequestId)
+	if node := env.Get("NODE_NAME"); node != "" {
+		this.Response.Header().Add("X-happyngine-node", node)
 	}
 
 	if !hasMime {

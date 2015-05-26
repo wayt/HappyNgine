@@ -1,4 +1,4 @@
-package happy
+package happyngine
 
 import (
 	"github.com/gohappy/happy/validator"

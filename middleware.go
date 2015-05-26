@@ -1,6 +1,10 @@
 package happy
 
-type MiddlewareHandler func(*Context) MiddlewareInterface
+import (
+	"github.com/gohappy/happy/context"
+)
+
+type MiddlewareHandler func(*context.Context) MiddlewareInterface
 
 type MiddlewareInterface interface {
 	HandleBefore() error
@@ -8,5 +12,5 @@ type MiddlewareInterface interface {
 }
 
 type Middleware struct {
-	Context *Context
+	Context *context.Context
 }

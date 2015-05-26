@@ -1,10 +1,11 @@
-package happy
+package happyngine
 
 import (
+	"github.com/gohappy/happy/context"
 	"github.com/gohappy/happy/validator"
 )
 
-type ActionHandler func(*Context) ActionInterface
+type ActionHandler func(*context.Context) ActionInterface
 
 type ActionInterface interface {
 	Run()
