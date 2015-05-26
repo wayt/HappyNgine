@@ -1,8 +1,8 @@
 package happyngine
 
 import (
-	"github.com/gohappy/happy/context"
-	"github.com/gohappy/happy/validator"
+	"github.com/wayt/happyngine/context"
+	"github.com/wayt/happyngine/validator"
 )
 
 type ActionHandler func(*context.Context) ActionInterface

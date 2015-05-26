@@ -1,7 +1,7 @@
 package happyngine
 
 import (
-	"github.com/gohappy/happy/validator"
+	"github.com/wayt/happyngine/validator"
 )
 
 type Parameter struct {
