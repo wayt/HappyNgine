@@ -1,15 +1,12 @@
 package redis
 
 import (
-	"errors"
 	"github.com/wayt/happyngine/env"
 	goredis "gopkg.in/redis.v3"
 	"time"
 )
 
 var Client *goredis.Client
-
-var CacheMiss = errors.New("redis: cache miss")
 
 func init() {
 
@@ -20,22 +17,36 @@ func init() {
 	})
 }
 
-func Get(key string) (string, error) {
+type Item struct {
+	Key        string
+	Value      string
+	Expiration time.Duration
+	Missed     bool
+}
 
-	res, err := Client.Get(key).Result()
+func Get(key string) (*Item, error) {
+
+	item := &Item{
+		Key:    key,
+		Missed: false,
+	}
+
+	var err error
+	item.Value, err = Client.Get(key).Result()
 	if err != nil {
 
 		if err == goredis.Nil {
-			return "", CacheMiss
+			item.Missed = true
+			return item, nil
 		}
 
-		return "", err
+		return nil, err
 	}
 
-	return res, nil
+	return item, nil
 }
 
-func Set(key, value string, expiration time.Duration) error {
+func Set(item *Item) error {
 
-	return Client.Set(key, value, expiration).Err()
+	return Client.Set(item.Key, item.Value, item.Expiration).Err()
 }
