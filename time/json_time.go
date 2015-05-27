@@ -2,10 +2,12 @@ package time
 
 import (
 	"fmt"
-	"time"
+	gotime "time"
 )
 
-type JSONTime time.Time
+type JSONTime struct {
+	gotime.Time
+}
 
 func (t JSONTime) MarshalJSON() ([]byte, error) {
 
@@ -13,5 +15,5 @@ func (t JSONTime) MarshalJSON() ([]byte, error) {
 }
 
 func Now() JSONTime {
-	return time.Now()
+	return JSONTime{gotime.Now()}
 }
