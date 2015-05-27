@@ -25,8 +25,19 @@ func init() {
 	}
 }
 
-func TimeUUID() gocql.UUID {
+type UUID gocql.UUID
+
+func (u UUID) MarshalJSON() ([]byte, error) {
+
+	return []byte(u.String()), nil
+}
+
+func TimeUUID() UUID {
 	return gocql.TimeUUID()
+}
+
+func ParseUUID(input string) (UUID, error) {
+	return gocql.ParseUUID(input)
 }
 
 func Query(stmt string, values ...interface{}) *gocql.Query {
