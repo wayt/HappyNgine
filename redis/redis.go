@@ -50,3 +50,7 @@ func Set(item *Item) error {
 
 	return Client.Set(item.Key, item.Value, item.Expiration).Err()
 }
+
+func Delete(key string) error {
+	return Client.Del(key).Err()
+}
