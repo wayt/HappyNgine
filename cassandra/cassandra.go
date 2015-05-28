@@ -25,24 +25,18 @@ func init() {
 	}
 }
 
-type UUID struct {
-	gocql.UUID
+func TimeUUID() gocql.UUID {
+	return gocql.TimeUUID()
 }
 
-func (u UUID) MarshalJSON() ([]byte, error) {
-
-	return []byte(u.String()), nil
-}
-
-func TimeUUID() UUID {
-	return UUID{gocql.TimeUUID()}
-}
-
-func ParseUUID(input string) (UUID, error) {
-	gocqlUUID, err := gocql.ParseUUID(input)
-	return UUID{UUID: gocqlUUID}, err
+func ParseUUID(input string) (gocql.UUID, error) {
+	return gocql.ParseUUID(input)
 }
 
 func Query(stmt string, values ...interface{}) *gocql.Query {
 	return Session.Query(stmt, values...)
+}
+
+func ExecuteBatch(batch *gocql.Batch) error {
+	return Session.ExecuteBatch(batch)
 }
