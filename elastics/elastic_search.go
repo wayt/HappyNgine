@@ -285,6 +285,32 @@ func Get(_type, id string) (*GetResult, error) {
 
 }
 
+type DeleteResult struct {
+	Found   bool   `json:"found"`
+	Index   string `json:"_index"`
+	Type    string `json:"_type"`
+	Id      string `json:"_id"`
+	Version int    `json:"_version"`
+}
+
+// Delete a document
+func Delete(_type, id string) (*DeleteResult, error) {
+
+	req, err := newRequest("DELETE", fmt.Sprintf("/%s/%s/%s", Config.Index, _type, id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := new(DeleteResult)
+	if err := do(req, resp); err != nil {
+
+		return nil, err
+	}
+
+	return resp, nil
+
+}
+
 type PingResult struct {
 	Status      int    `json:"status"`
 	Name        string `json:"name"`
