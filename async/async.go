@@ -3,6 +3,7 @@ package async
 import (
 	"errors"
 	"github.com/wayt/happyngine"
+	"github.com/wayt/happyngine/log"
 	"reflect"
 )
 
@@ -62,10 +63,11 @@ func (f *Function) Call(c *happyngine.Context, args ...interface{}) *FunctionRes
 	result.errs = make(chan error)
 
 	go func() {
+		defer close(result.errs)
 
+		// Panic handler
+		defer RecoverOnPanic()
 		result.result = f.fv.Call(in)
-
-		close(result.errs)
 	}()
 
 	return result
@@ -76,4 +78,11 @@ func (r *FunctionResult) Wait() []reflect.Value {
 	<-r.errs
 
 	return r.result
+}
+
+func RecoverOnPanic() {
+	if r := recover(); r != nil {
+
+		log.Criticalln("happyngine.Async.Function.Call:", r)
+	}
 }
