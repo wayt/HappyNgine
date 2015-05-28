@@ -1,11 +1,10 @@
 package happyngine
 
 import (
-	"github.com/wayt/happyngine/context"
 	"github.com/wayt/happyngine/validator"
 )
 
-type ActionHandler func(*context.Context) ActionInterface
+type ActionHandler func(*Context) ActionInterface
 
 type ActionInterface interface {
 	Run()

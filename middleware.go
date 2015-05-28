@@ -1,10 +1,6 @@
-package happy
+package happyngine
 
-import (
-	"github.com/wayt/happyngine/context"
-)
-
-type MiddlewareHandler func(*context.Context) MiddlewareInterface
+type MiddlewareHandler func(*Context) MiddlewareInterface
 
 type MiddlewareInterface interface {
 	HandleBefore() error
@@ -12,5 +8,5 @@ type MiddlewareInterface interface {
 }
 
 type Middleware struct {
-	Context *context.Context
+	Context *Context
 }

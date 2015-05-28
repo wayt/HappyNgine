@@ -1,9 +1,10 @@
-package context
+package happyngine
 
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,25 +13,26 @@ import (
 type Context struct {
 	Request            *http.Request
 	Response           http.ResponseWriter
-	API                *API
 	Middlewares        []MiddlewareInterface
+	API                *API
 	UserData           map[string]interface{}
 	ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
 	RequestId          string
 }
 
-func NewContext(req *http.Request, resp http.ResponseWriter) *Context {
+func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
 
 	c := new(Context)
 
 	c.Request = req
 	c.Response = resp
+	c.API = api
 	c.UserData = make(map[string]interface{})
 	c.ResponseStatusCode = 200
 
 	c.RequestId = uuid.New()
 
-	return this
+	return c
 }
 
 func (c *Context) GetParam(key string) string {
@@ -38,9 +40,9 @@ func (c *Context) GetParam(key string) string {
 	return c.Request.FormValue(key)
 }
 
-func (this *Context) GetIntParam(key string) int {
+func (c *Context) GetIntParam(key string) int {
 
-	value, err := strconv.Atoi(this.Request.FormValue(key))
+	value, err := strconv.Atoi(c.Request.FormValue(key))
 	if err != nil {
 		return 0
 	}
@@ -48,9 +50,9 @@ func (this *Context) GetIntParam(key string) int {
 	return value
 }
 
-func (this *Context) GetInt64Param(key string) int64 {
+func (c *Context) GetInt64Param(key string) int64 {
 
-	value, err := strconv.ParseInt(this.Request.FormValue(key), 10, 64)
+	value, err := strconv.ParseInt(c.Request.FormValue(key), 10, 64)
 	if err != nil {
 		return 0
 	}
@@ -99,7 +101,7 @@ func (c *Context) Send(code int, text string, headers ...string) {
 		}
 	}
 
-	c.Response.Header().Add("X-happyngine-request-id", this.RequestId)
+	c.Response.Header().Add("X-happyngine-request-id", c.RequestId)
 	if node := env.Get("NODE_NAME"); node != "" {
 		c.Response.Header().Add("X-happyngine-node", node)
 	}
@@ -108,7 +110,7 @@ func (c *Context) Send(code int, text string, headers ...string) {
 		c.Response.Header().Add("Content-Type", "application/json")
 	}
 
-	for k, v := range this.API.Headers {
+	for k, v := range c.API.Headers {
 
 		matchs := regexp.MustCompile(`^{(.*)}$`).FindStringSubmatch(v)
 		if len(matchs) != 0 {
@@ -138,17 +140,17 @@ func (c *Context) RemoteIP() string {
 }
 
 func (c *Context) Debugln(args ...interface{}) {
-	debug.Println(append([]interface{}{c.RequestId}, args...))
+	log.Debugln(append([]interface{}{c.RequestId}, args...))
 }
 
 func (c *Context) Warningln(args ...interface{}) {
-	warning.Println(append([]interface{}{c.RequestId}, args...))
+	log.Warningln(append([]interface{}{c.RequestId}, args...))
 }
 
 func (c *Context) Errorln(args ...interface{}) {
-	err.Println(append([]interface{}{c.RequestId}, args...))
+	log.Errorln(append([]interface{}{c.RequestId}, args...))
 }
 
 func (c *Context) Criticalln(args ...interface{}) {
-	critical.Println(append([]interface{}{c.RequestId}, args...))
+	log.Criticalln(append([]interface{}{c.RequestId}, args...))
 }
