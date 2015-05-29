@@ -11,6 +11,7 @@ type ActionInterface interface {
 	IsValid() bool
 	GetErrors() ([]string, int)
 	Send(int, string, ...string)
+	HasErrors() bool
 }
 
 type Action struct {
@@ -37,6 +38,10 @@ func (this *Action) IsValid() bool {
 	}
 
 	return isValid
+}
+
+func (this *Action) HasErrors() bool {
+	return len(this.Errors) != 0
 }
 
 func (this *Action) GetErrors() ([]string, int) {

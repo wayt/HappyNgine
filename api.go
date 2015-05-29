@@ -81,7 +81,9 @@ func (this *API) dispatch(route *Route, context *Context) {
 
 	action := route.ActionHandler(context)
 
-	if action.IsValid() {
+	action.IsValid()
+
+	if !action.HasErrors() {
 
 		action.Run()
 	}
