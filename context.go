@@ -130,7 +130,7 @@ func (c *Context) Send(code int, text string, headers ...string) {
 
 func (c *Context) RemoteIP() string {
 
-	ipStr := strings.SplitN(c.Request.RemoteAddr, ":", 1)[0]
+	ipStr := strings.SplitN(c.Request.RemoteAddr, ":", 2)[0]
 
 	if header := c.Request.Header.Get("X-Forwarded-For"); len(header) != 0 {
 		ipStr = header
