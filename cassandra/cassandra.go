@@ -12,11 +12,12 @@ var Session *gocql.Session
 
 func init() {
 
-	hostsString := env.Get("HAPPY_CASSANDRA_HOSTS")
+	hostsString := env.Get("CASSANDRA_PORT_9042_TCP_ADDR")
 	hosts := strings.Split(hostsString, ",")
 
 	ClusterCfg = gocql.NewCluster(hosts...)
 	ClusterCfg.Keyspace = env.Get("HAPPY_CASSANDRA_KEYSPACE")
+	ClusterCfg.Port = env.GetInt("CASSANDRA_PORT_9042_TCP_PORT")
 
 	var err error
 	Session, err = ClusterCfg.CreateSession()

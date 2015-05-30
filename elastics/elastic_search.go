@@ -3,13 +3,13 @@ package elastics
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/wayt/happyngine/env"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 var Config *ESConfig
@@ -24,7 +24,7 @@ type ESConfig struct {
 func init() {
 
 	Config = &ESConfig{
-		Hosts:    strings.Split(env.Get("HAPPY_ELASTICSEARCH_HOSTS"), ","),
+		Hosts:    []string{env.Get("ELASTICSEARCH_PORT_9200_TCP_ADDR") + ":" + env.Get("ELASTICSEARCH_PORT_9200_TCP_PORT")},
 		Index:    env.Get("HAPPY_ELASTICSEARCH_INDEX"),
 		Username: env.Get("HAPPY_ELASTICSEARCH_USERNAME"),
 		Password: env.Get("HAPPY_ELASTICSEARCH_PASSWORD"),
@@ -247,13 +247,17 @@ func Search(_type, query string) (*SearchResult, error) {
 		return nil, err
 	}
 
-	var resp SearchResult
-	if err := do(req, &resp); err != nil {
+	resp := new(SearchResult)
+	if err := do(req, resp); err != nil {
 
 		return nil, err
 	}
 
-	return &resp, nil
+	if len(resp.Error) > 0 {
+		return resp, errors.New(resp.Error)
+	}
+
+	return resp, nil
 }
 
 type GetResult struct {
