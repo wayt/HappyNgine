@@ -46,9 +46,17 @@ func ParseUUID(input string) (gocql.UUID, error) {
 }
 
 func Query(stmt string, values ...interface{}) *gocql.Query {
-	return Sessions[MAIN_KEYSPACE_ALIAS].Query(stmt, values...)
+	return AQuery(MAIN_KEYSPACE_ALIAS, stmt, values...)
+}
+
+func AQuery(alias, stmt string, values ...interface{}) *gocql.Query {
+	return Sessions[alias].Query(stmt, values...)
 }
 
 func ExecuteBatch(batch *gocql.Batch) error {
-	return Sessions[MAIN_KEYSPACE_ALIAS].ExecuteBatch(batch)
+	return AExecuteBatch(MAIN_KEYSPACE_ALIAS, batch)
+}
+
+func AExecuteBatch(alias string, batch *gocql.Batch) error {
+	return Sessions[alias].ExecuteBatch(batch)
 }
