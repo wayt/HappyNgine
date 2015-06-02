@@ -30,6 +30,7 @@ func NewKeyspaceSession(keyspace, alias string) (*gocql.Session, error) {
 	cfg := gocql.NewCluster(hosts...)
 	cfg.Keyspace = keyspace
 	cfg.Port = env.GetInt("CASSANDRA_PORT_9042_TCP_PORT")
+	cfg.Consistency = gocql.One
 
 	var err error
 	Sessions[alias], err = cfg.CreateSession()
