@@ -53,3 +53,14 @@ func GetInt(name string) int {
 
 	return nb
 }
+
+func GetBool(name string) bool {
+
+	v := Get(name)
+
+	if strings.ToLower(v) == "true" {
+		return true
+	}
+
+	return false
+}
