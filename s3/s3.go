@@ -71,7 +71,7 @@ func Url(bucket, path string) string {
 	u := &url.URL{
 		Scheme: "https",
 		Host:   bucket,
-		Path:   path,
+		Path:   url.QueryEscape(path),
 	}
 
 	return u.String()
