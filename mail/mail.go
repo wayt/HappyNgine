@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"errors"
 	"github.com/wayt/happyngine/env"
 )
 
@@ -11,7 +12,6 @@ func init() {
 	case "mailgun":
 		provider = newMailgun()
 	}
-
 }
 
 type Email struct {
@@ -27,5 +27,9 @@ type EmailProviderInterface interface {
 }
 
 func Send(m Email) error {
+	if provider == nil {
+
+		return errors.New("No email provider supplied")
+	}
 	return provider.Send(m)
 }
