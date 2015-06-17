@@ -83,7 +83,7 @@ func (this *API) dispatch(route *Route, context *Context) {
 
 	action.IsValid()
 
-	if !context.HasErrors() {
+	if action.IsValid() {
 
 		action.Run()
 	}
