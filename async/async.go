@@ -5,6 +5,7 @@ import (
 	"github.com/wayt/happyngine"
 	"github.com/wayt/happyngine/log"
 	"reflect"
+	"runtime"
 )
 
 var (
@@ -88,5 +89,10 @@ func RecoverOnPanic(name string) {
 	if r := recover(); r != nil {
 
 		log.Criticalln("happyngine.Async.Function.Call: "+name+":", r)
+
+		trace := make([]byte, 1024)
+		runtime.Stack(trace, true)
+
+		log.Criticalln(r, string(trace))
 	}
 }
