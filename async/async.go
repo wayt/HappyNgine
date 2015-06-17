@@ -13,7 +13,8 @@ var (
 )
 
 type Function struct {
-	fv reflect.Value // Kind() == reflect.Func
+	Name string
+	fv   reflect.Value // Kind() == reflect.Func
 }
 
 type FunctionResult struct {
@@ -21,9 +22,12 @@ type FunctionResult struct {
 	result []reflect.Value
 }
 
-func New(i interface{}) *Function {
+func New(name string, i interface{}) *Function {
 
-	f := &Function{fv: reflect.ValueOf(i)}
+	f := &Function{
+		Name: name,
+		fv:   reflect.ValueOf(i),
+	}
 
 	t := f.fv.Type()
 	if t.Kind() != reflect.Func {
@@ -66,7 +70,7 @@ func (f *Function) Call(c *happyngine.Context, args ...interface{}) *FunctionRes
 		defer close(result.errs)
 
 		// Panic handler
-		defer RecoverOnPanic()
+		defer RecoverOnPanic(f.Name)
 		result.result = f.fv.Call(in)
 	}()
 
@@ -80,9 +84,9 @@ func (r *FunctionResult) Wait() []reflect.Value {
 	return r.result
 }
 
-func RecoverOnPanic() {
+func RecoverOnPanic(name string) {
 	if r := recover(); r != nil {
 
-		log.Criticalln("happyngine.Async.Function.Call:", r)
+		log.Criticalln("happyngine.Async.Function.Call: "+name+":", r)
 	}
 }
