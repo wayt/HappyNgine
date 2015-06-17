@@ -83,12 +83,12 @@ func (this *API) dispatch(route *Route, context *Context) {
 
 	action.IsValid()
 
-	if !action.HasErrors() {
+	if !context.HasErrors() {
 
 		action.Run()
 	}
 
-	errors, code := action.GetErrors()
+	errors, code := context.GetErrors()
 	if len(errors) != 0 {
 
 		response := `{"error":["` + strings.Join(errors, `","`) + `"]}`

@@ -9,19 +9,29 @@ type ActionHandler func(*Context) ActionInterface
 type ActionInterface interface {
 	Run()
 	IsValid() bool
-	GetErrors() ([]string, int)
 	Send(int, string, ...string)
-	HasErrors() bool
 }
 
 type Action struct {
 	Context    *Context
+	Form       *Form
 	Parameters []*Parameter
-	Errors     []string
-	ErrorCode  int
 }
 
 func (this *Action) IsValid() bool {
+
+	if !this.oldIsValid() {
+		return false
+	}
+
+	if this.Form == nil {
+		return true
+	}
+
+	return this.Form.IsValid()
+}
+
+func (this *Action) oldIsValid() bool {
 
 	request := this.Context.Request
 	isValid := true
@@ -41,12 +51,13 @@ func (this *Action) IsValid() bool {
 }
 
 func (this *Action) HasErrors() bool {
-	return len(this.Errors) != 0
+
+	return this.Context.HasErrors()
 }
 
 func (this *Action) GetErrors() ([]string, int) {
 
-	return this.Errors, this.ErrorCode
+	return this.Context.GetErrors()
 }
 
 func (this *Action) AddParameter(name string, required bool, validators ...*validator.Validator) {
@@ -56,8 +67,7 @@ func (this *Action) AddParameter(name string, required bool, validators ...*vali
 
 func (this *Action) AddError(code int, text string) {
 
-	this.ErrorCode = code
-	this.Errors = append(this.Errors, text)
+	this.Context.AddError(code, text)
 }
 
 func (this *Action) GetParam(key string) string {

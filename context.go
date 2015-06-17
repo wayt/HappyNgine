@@ -18,6 +18,8 @@ type Context struct {
 	UserData           map[string]interface{}
 	ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
 	RequestId          string
+	Errors             map[string]string
+	ErrorCode          int
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -29,6 +31,7 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 	c.API = api
 	c.UserData = make(map[string]interface{})
 	c.ResponseStatusCode = 200
+	c.Errors = make(map[string]string)
 
 	c.RequestId = uuid.New()
 
@@ -153,4 +156,23 @@ func (c *Context) Errorln(args ...interface{}) {
 
 func (c *Context) Criticalln(args ...interface{}) {
 	log.Criticalln(append([]interface{}{c.RequestId}, args...))
+}
+
+func (c *Context) AddError(code int, text string) {
+	c.ErrorCode = code
+	c.Errors[text] = text
+}
+
+func (c *Context) GetErrors() ([]string, int) {
+
+	errs := make([]string, 0)
+	for _, err := range c.Errors {
+		errs = append(errs, err)
+	}
+
+	return errs, c.ErrorCode
+}
+
+func (c *Context) HasErrors() bool {
+	return len(c.Errors) != 0
 }
