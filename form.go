@@ -9,6 +9,7 @@ type FormElementInterface interface {
 	Value() interface{}
 	Error() string
 	Required() bool
+	Found() bool
 }
 
 type FormElement struct {
@@ -18,6 +19,7 @@ type FormElement struct {
 	errorString string
 	required    bool
 	handlers    []FormValidatorHandler
+	found       bool
 }
 
 func NewFormElement(name, errStr string) *FormElement {
@@ -39,6 +41,7 @@ func (e *FormElement) Name() string {
 func (e *FormElement) Validate(c *Context) {
 
 	for _, h := range e.handlers {
+
 		h(c, e)
 		if c.HasErrors() {
 			break
@@ -48,6 +51,7 @@ func (e *FormElement) Validate(c *Context) {
 
 func (e *FormElement) SetFormValue(v string) {
 	e.formValue = v
+	e.found = true
 }
 
 func (e *FormElement) FormValue() string {
@@ -62,6 +66,10 @@ func (e *FormElement) Value() interface{} {
 	return e.value
 }
 
+func (e *FormElement) Found() bool {
+	return e.found
+}
+
 func (e *FormElement) Error() string {
 	return e.errorString
 }
@@ -70,8 +78,9 @@ func (e *FormElement) Required() bool {
 	return e.required
 }
 
-func (e *FormElement) SetRequired(r bool) {
+func (e *FormElement) SetRequired(r bool) *FormElement {
 	e.required = r
+	return e
 }
 
 func (e *FormElement) AddValidator(h FormValidatorHandler) *FormElement {
@@ -132,7 +141,9 @@ func (f *Form) IsValid() bool {
 
 	for _, e := range f.Elements {
 
-		e.Validate(f.Context)
+		if e.Found() {
+			e.Validate(f.Context)
+		}
 	}
 
 	return !f.Context.HasErrors()
