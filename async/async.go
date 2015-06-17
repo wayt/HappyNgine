@@ -2,6 +2,7 @@ package async
 
 import (
 	"errors"
+	"fmt"
 	"github.com/wayt/happyngine"
 	"github.com/wayt/happyngine/log"
 	"reflect"
@@ -94,5 +95,12 @@ func RecoverOnPanic(name string) {
 		runtime.Stack(trace, true)
 
 		log.Criticalln(r, string(trace))
+	}
+}
+
+func CatchPanic(errs chan error) {
+
+	if r := recover(); r != nil {
+		errs <- errors.New(fmt.Sprintf("%v", r))
 	}
 }
