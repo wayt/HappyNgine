@@ -76,3 +76,13 @@ func Url(bucket, path string) string {
 
 	return u.String()
 }
+
+func GetBucketContents(bucket string) (*map[string]s3.Key, error) {
+
+	b := S3.Bucket(bucket)
+	if b == nil {
+		return nil, errors.New("Unknown bucket: " + bucket)
+	}
+
+	return b.GetBucketContents()
+}
