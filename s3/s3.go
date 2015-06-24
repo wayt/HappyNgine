@@ -2,6 +2,7 @@ package s3
 
 import (
 	"errors"
+	"fmt"
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/s3"
 	"github.com/wayt/happyngine/env"
@@ -11,6 +12,7 @@ import (
 )
 
 var S3 *s3.S3
+var awsProxyURL *url.URL
 
 func init() {
 
@@ -21,6 +23,15 @@ func init() {
 
 	regionName := env.Get("AWS_DEFAULT_REGION")
 	S3 = s3.New(auth, aws.Regions[regionName])
+
+	if awsURL := env.Get("AWS_PROXY_URL"); len(awsURL) > 0 {
+
+		var err error
+		awsProxyURL, err = url.Parse(awsURL)
+		if err != nil {
+			log.Criticalln("happyngine.s3.init():", err)
+		}
+	}
 }
 
 const (
@@ -68,10 +79,19 @@ func Del(bucket, path string) error {
 
 func Url(bucket, path string) string {
 
-	u := &url.URL{
-		Scheme: "https",
-		Host:   bucket,
-		Path:   url.QueryEscape(path),
+	u := new(url.URL)
+
+	if awsProxyURL != nil {
+
+		*u = *awsProxyURL
+
+		u.Path = fmt.Sprintf("%s/%s", bucket, url.QueryEscape(path))
+
+	} else {
+
+		u.Scheme = "https"
+		u.Host = bucket
+		u.Path = url.QueryEscape(path)
 	}
 
 	return u.String()
