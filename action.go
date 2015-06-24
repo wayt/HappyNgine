@@ -102,5 +102,10 @@ func (this *Action) GetURLInt64Param(key string) int64 {
 
 func (this *Action) Send(code int, text string, headers ...string) {
 
-	this.Context.Send(code, text, headers...)
+	this.Context.SendByte(code, []byte(text), headers...)
+}
+
+func (this *Action) SendByte(code int, data []byte, headers ...string) {
+
+	this.Context.SendByte(code, data, headers...)
 }

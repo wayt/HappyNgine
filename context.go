@@ -88,6 +88,10 @@ func (c *Context) GetURLInt64Param(key string) int64 {
 }
 
 func (c *Context) Send(code int, text string, headers ...string) {
+	c.SendByte(code, []byte(text), headers...)
+}
+
+func (c *Context) SendByte(code int, data []byte, headers ...string) {
 
 	hasMime := false
 	for _, header := range headers {
@@ -127,7 +131,7 @@ func (c *Context) Send(code int, text string, headers ...string) {
 	}
 
 	c.Response.WriteHeader(code)
-	c.Response.Write([]byte(text))
+	c.Response.Write(data)
 	c.ResponseStatusCode = code
 }
 
