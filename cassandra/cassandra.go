@@ -33,7 +33,7 @@ func NewKeyspaceSession(keyspace, alias string) (*gocql.Session, error) {
 	cfg.Port = env.GetInt("CASSANDRA_PORT_9042_TCP_PORT")
 	cfg.Consistency = gocql.One
 	if timeout := env.GetInt("HAPPY_CASSANDRA_TIMEOUT"); timeout > 0 {
-		cfg.Timeout = time.Duration(timeout)
+		cfg.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 
 	var err error
