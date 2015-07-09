@@ -36,6 +36,14 @@ func NewKeyspaceSession(keyspace, alias string) (*gocql.Session, error) {
 		cfg.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 
+	if numConns := env.GetInt("HAPPY_CASSANDRA_NUM_CONNS"); numConns > 0 {
+		cfg.NumConns = numConns
+	}
+
+	if numStreams := env.GetInt("HAPPY_CASSANDRA_NUM_STREAMS"); numStreams > 0 {
+		cfg.NumStreams = numStreams
+	}
+
 	var err error
 	Sessions[alias], err = cfg.CreateSession()
 
