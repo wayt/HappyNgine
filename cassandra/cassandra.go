@@ -63,6 +63,7 @@ func Query(stmt string, values ...interface{}) *gocql.Query {
 }
 
 func AQuery(alias, stmt string, values ...interface{}) *gocql.Query {
+	log.Debugln("cassandra.AQuery[", alias, "]:", stmt)
 	return Sessions[alias].Query(stmt, values...)
 }
 
