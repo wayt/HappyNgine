@@ -10,10 +10,22 @@ var Client *goredis.Client
 
 func init() {
 
+	poolSize := env.GetInt("HAPPY_REDIS_POOL_SIZE")
+	if poolSize <= 0 {
+		poolSize = 10
+	}
+
+	poolTimeout := time.Duration(env.GetInt("HAPPY_REDIS_POOL_TIMEOUT")) * time.Millisecond
+	if poolTimeout <= 0 {
+		poolTimeout = time.Second * 5
+	}
+
 	Client = goredis.NewClient(&goredis.Options{
-		Addr:     env.Get("REDIS_PORT_6379_TCP_ADDR") + ":" + env.Get("REDIS_PORT_6379_TCP_PORT"),
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:        env.Get("REDIS_PORT_6379_TCP_ADDR") + ":" + env.Get("REDIS_PORT_6379_TCP_PORT"),
+		Password:    "", // no password set
+		DB:          0,  // use default DB
+		PoolSize:    poolSize,
+		PoolTimeout: poolTimeout,
 	})
 }
 
