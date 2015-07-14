@@ -44,6 +44,13 @@ func NewKeyspaceSession(keyspace, alias string) (*gocql.Session, error) {
 		cfg.NumStreams = numStreams
 	}
 
+	if username := env.Get("HAPPY_CASSANDRA_USERNAME"); len(username) > 0 {
+		cfg.Authenticator = gocql.PasswordAuthenticator{
+			Username: username,
+			Password: env.Get("HAPPY_CASSANDRA_PASSWORD"),
+		}
+	}
+
 	var err error
 	Sessions[alias], err = cfg.CreateSession()
 
