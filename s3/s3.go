@@ -106,3 +106,13 @@ func GetBucketContents(bucket string) (*map[string]s3.Key, error) {
 
 	return b.GetBucketContents()
 }
+
+func Copy(bucket, oldPath, newPath string, perm s3.ACL) error {
+
+	b := S3.Bucket(bucket)
+	if b == nil {
+		return errors.New("Unknown bucket: " + bucket)
+	}
+
+	return b.Copy(oldPath, newPath, perm)
+}
