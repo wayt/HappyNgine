@@ -74,7 +74,9 @@ func newRequest(method, path string, body []byte) (req *http.Request, err error)
 
 func do(req *http.Request, respStruct interface{}) error {
 
+	log.Debugln("elastic.do:", req.URL.String())
 	resp, err := http.DefaultClient.Do(req)
+	log.Debugln("elastic.do: done:", req.URL.String())
 	if err != nil {
 		return err
 	}
