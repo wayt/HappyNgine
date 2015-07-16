@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wayt/happyngine/env"
+	"github.com/wayt/happyngine/log"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
