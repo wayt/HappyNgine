@@ -66,9 +66,15 @@ func SignedURL(bucket, path string, expires time.Time) string {
 
 		u.Path = fmt.Sprintf("%s/%s", bucket, url.QueryEscape(path))
 
-		values, err := url.ParseQuery(signedUrl)
+		signedUrlObj, err := url.Parse(signedUrl)
 		if err != nil {
-			log.Errorln("s3.SignedUrl:", err)
+			log.Errorln("s3.SignedUrl: url.Parse:", err)
+			return ""
+		}
+
+		values, err := url.ParseQuery(signedUrlObj.RawQuery)
+		if err != nil {
+			log.Errorln("s3.SignedUrl: url.ParseQuery:", err)
 			return ""
 		}
 
