@@ -56,7 +56,28 @@ func Put(bucket, path string, data []byte, contentType string, perm s3.ACL) erro
 func SignedURL(bucket, path string, expires time.Time) string {
 
 	b := S3.Bucket(bucket)
-	return b.SignedURL(path, expires)
+	signedUrl := b.SignedURL(path, expires)
+
+	if awsProxyURL != nil {
+
+		u := new(url.URL)
+
+		*u = *awsProxyURL
+
+		u.Path = fmt.Sprintf("%s/%s", bucket, url.QueryEscape(path))
+
+		values, err := url.ParseQuery(signedUrl)
+		if err != nil {
+			log.Errorln("s3.SignedUrl:", err)
+			return ""
+		}
+
+		u.RawQuery = values.Encode()
+
+		signedUrl = u.String()
+	}
+
+	return signedUrl
 }
 
 func Get(bucket, path string) ([]byte, error) {
