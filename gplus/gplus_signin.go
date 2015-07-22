@@ -46,12 +46,6 @@ func GetTokenInfo(token string) (*TokenInfo, error) {
 		return nil, err
 	}
 
-	// Check domain
-	if env.Get("GOOGLEPLUS_DOMAIN") != t.Hd {
-
-		return nil, nil
-	}
-
 	if env.Get("GOOGLEPLUS_CLIENT_ID") != t.Aud {
 		return nil, nil
 	}
