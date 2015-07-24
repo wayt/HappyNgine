@@ -7,12 +7,10 @@ import (
 	"github.com/mitchellh/goamz/s3"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
-	"net/url"
 	"time"
 )
 
 var S3 *s3.S3
-var awsProxyURL *url.URL
 
 func init() {
 
@@ -23,15 +21,6 @@ func init() {
 
 	regionName := env.Get("AWS_DEFAULT_REGION")
 	S3 = s3.New(auth, aws.Regions[regionName])
-
-	if awsURL := env.Get("AWS_PROXY_URL"); len(awsURL) > 0 {
-
-		var err error
-		awsProxyURL, err = url.Parse(awsURL)
-		if err != nil {
-			log.Criticalln("happyngine.s3.init():", err)
-		}
-	}
 }
 
 const (
@@ -58,31 +47,6 @@ func SignedURL(bucket, path string, expires time.Time) string {
 	b := S3.Bucket(bucket)
 	signedUrl := b.SignedURL(path, expires)
 
-	if awsProxyURL != nil {
-
-		u := new(url.URL)
-
-		*u = *awsProxyURL
-
-		u.Path = fmt.Sprintf("%s/%s", bucket, url.QueryEscape(path))
-
-		signedUrlObj, err := url.Parse(signedUrl)
-		if err != nil {
-			log.Errorln("s3.SignedUrl: url.Parse:", err)
-			return ""
-		}
-
-		values, err := url.ParseQuery(signedUrlObj.RawQuery)
-		if err != nil {
-			log.Errorln("s3.SignedUrl: url.ParseQuery:", err)
-			return ""
-		}
-
-		u.RawQuery = values.Encode()
-
-		signedUrl = u.String()
-	}
-
 	return signedUrl
 }
 
@@ -106,22 +70,7 @@ func Del(bucket, path string) error {
 
 func Url(bucket, path string) string {
 
-	u := new(url.URL)
-
-	if awsProxyURL != nil {
-
-		*u = *awsProxyURL
-
-		u.Path = fmt.Sprintf("%s/%s", bucket, url.QueryEscape(path))
-
-	} else {
-
-		u.Scheme = "https"
-		u.Host = bucket
-		u.Path = url.QueryEscape(path)
-	}
-
-	return u.String()
+	return fmt.Sprintf("%s/%s/%s", S3.Region.S3Endpoint, bucket, path)
 }
 
 func GetBucketContents(bucket string) (*map[string]s3.Key, error) {
