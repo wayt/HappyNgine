@@ -12,6 +12,8 @@ import (
 
 var Sessions map[string]*gocql.Session
 
+var debugQueries bool = env.GetBool("HAPPY_CASSANDRA_DEBUG")
+
 const (
 	MAIN_KEYSPACE_ALIAS = "__main__"
 )
@@ -72,7 +74,9 @@ func Query(stmt string, values ...interface{}) *gocql.Query {
 }
 
 func AQuery(alias, stmt string, values ...interface{}) *gocql.Query {
-	log.Debugln("cassandra.AQuery[", alias, "]:", stmt)
+	if debugQueries {
+		log.Debugln("cassandra.AQuery[", alias, "]:", stmt)
+	}
 	return Sessions[alias].Query(stmt, values...)
 }
 
