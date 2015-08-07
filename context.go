@@ -1,7 +1,7 @@
 package happyngine
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	//"code.google.com/p/go-uuid/uuid"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
 	"net/http"
@@ -33,7 +33,7 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 	c.ResponseStatusCode = 200
 	c.Errors = make(map[string]string)
 
-	c.RequestId = uuid.New()
+	c.RequestId = "42" // uuid.New()
 
 	return c
 }
