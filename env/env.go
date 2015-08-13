@@ -19,10 +19,16 @@ func init() {
 	for _, e := range os.Environ() {
 		pair := strings.Split(e, "=")
 		Env[pair[0]] = pair[1]
+		log.Println(pair[0], "=", pair[1])
+	}
+
+	envFile := ".env"
+	if e := os.Getenv("HAPPY_ENV_FILE"); e != "" {
+		envFile = e
 	}
 
 	// Read .env file
-	env, err := godotenv.Read()
+	env, err := godotenv.Read(envFile)
 	if err != nil {
 		log.Println(err)
 	}
@@ -30,6 +36,8 @@ func init() {
 	for k, v := range env {
 		Env[k] = v
 	}
+
+	log.Println(Env)
 }
 
 // Return a value from environement
