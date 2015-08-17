@@ -19,7 +19,6 @@ func init() {
 	for _, e := range os.Environ() {
 		pair := strings.Split(e, "=")
 		Env[pair[0]] = pair[1]
-		log.Println(pair[0], "=", pair[1])
 	}
 
 	envFile := ".env"
