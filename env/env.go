@@ -36,8 +36,6 @@ func init() {
 	for k, v := range env {
 		Env[k] = v
 	}
-
-	log.Println(Env)
 }
 
 // Return a value from environement
