@@ -140,10 +140,12 @@ func (c *Context) RemoteIP() string {
 	ipStr := strings.SplitN(c.Request.RemoteAddr, ":", 2)[0]
 
 	if header := c.Request.Header.Get("X-Forwarded-For"); len(header) != 0 {
-		ipStr = header
+		// Because of google http load balancer
+		// X-Forwarded-For: <client IP(s)>, <global forwarding rule external IP> (requests only)
+		ipStr = strings.Split(header, ",")[0]
 	}
 
-	return ipStr
+	return strings.Trim(ipStr, " ")
 }
 
 func (c *Context) Debugln(args ...interface{}) {
