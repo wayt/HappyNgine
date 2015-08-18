@@ -46,12 +46,16 @@ func createInsertQuery(table string, data interface{}) (string, []interface{}, e
 	return stmt, values, nil
 }
 
-func Insert(table string, data interface{}) error {
+func Insert(table string, data interface{}, stmtExtras ...string) error {
 
 	stmt, values, err := createInsertQuery(table, data)
 	if err != nil {
 		return err
 	}
+
+	// Useful to specify `USING TTL 42`
+	stmt += " " + strings.Join(stmtExtras, "")
+
 	if err := Query(stmt, values...).Exec(); err != nil {
 		return err
 	}
