@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"errors"
+	"github.com/mitchellh/mapstructure"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
 	"gopkg.in/redis.v3"
@@ -105,10 +106,16 @@ func (t *Task) call(args ...interface{}) error {
 
 	ft := t.fv.Type()
 	in := []reflect.Value{}
-	for _, arg := range args {
+	for i, arg := range args {
 		var v reflect.Value
 		if arg != nil {
-			v = reflect.ValueOf(arg)
+
+			paramType := ft.In(i)
+
+			tmp := reflect.New(paramType)
+			mapstructure.Decode(arg, tmp.Interface())
+
+			v = tmp.Elem()
 		} else {
 			// Task was passed a nil argument, so we must construct
 			// the zero value for the argument here.
