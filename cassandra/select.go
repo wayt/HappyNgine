@@ -3,6 +3,7 @@ package cassandra
 import (
 	"fmt"
 	"github.com/gocql/gocql"
+	"github.com/wayt/happyngine/log"
 	"reflect"
 	"strings"
 )
@@ -69,7 +70,7 @@ func (q *selectQuery) Limit(param int) *selectQuery {
 func (q *selectQuery) GetQuery(columns []string) string {
 
 	str := fmt.Sprintf(q.selec+q.where+q.orderBy+q.limit, strings.Join(columns, QUERY_SEPARATOR))
-	fmt.Println(str)
+	log.Debugln("CASSANDRA:", str)
 
 	return str
 }

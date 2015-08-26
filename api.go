@@ -1,6 +1,8 @@
 package happyngine
 
 import (
+	"fmt"
+	"github.com/wayt/happyngine/log"
 	"net/http"
 	"strings"
 )
@@ -103,6 +105,8 @@ func (this *API) postDispatch(context *Context) {
 }
 
 func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+
+	log.Debugln("API:", req.Method, fmt.Sprintf("%s%s", req.URL.Path, req.URL.RawQuery))
 
 	context := NewContext(req, resp, this)
 

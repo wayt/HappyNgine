@@ -2,6 +2,7 @@ package cassandra
 
 import (
 	"fmt"
+	"github.com/wayt/happyngine/log"
 	"reflect"
 	"strings"
 )
@@ -42,6 +43,8 @@ func createInsertQuery(table string, data interface{}) (string, []interface{}, e
 		}
 	}
 	stmt := fmt.Sprintf(QUERY_INSERT, table, strings.Join(columns, QUERY_SEPARATOR), strings.Join(marks, QUERY_SEPARATOR))
+
+	log.Debugln("CASSANDRA:", stmt)
 
 	return stmt, values, nil
 }
@@ -95,6 +98,9 @@ func createUpdateQuery(table string, data interface{}) (string, []interface{}, e
 		}
 	}
 	stmt := fmt.Sprintf(QUERY_UPDATE, table, strings.Join(columns, QUERY_SEPARATOR), strings.Join(where, QUERY_AND))
+
+	log.Debugln("CASSANDRA:", stmt)
+
 	return stmt, values, nil
 }
 
@@ -137,6 +143,9 @@ func createDeleteQuery(table string, data interface{}) (string, []interface{}, e
 		}
 	}
 	stmt := fmt.Sprintf(QUERY_DELETE, table, strings.Join(where, QUERY_AND))
+
+	log.Debugln("CASSANDRA:", stmt)
+
 	return stmt, values, nil
 }
 
