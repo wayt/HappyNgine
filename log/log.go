@@ -7,7 +7,7 @@ import (
 )
 
 var debug = golog.New(os.Stdout, "DEBUG ", golog.LstdFlags)
-var printt = golog.New(os.Stdout, golog.LstdFlags)
+var printt = golog.New(os.Stdout, "", golog.LstdFlags)
 var warning = golog.New(os.Stdout, "\033[33mWARNING ", golog.LstdFlags)
 var err = golog.New(os.Stdout, "\033[41mERROR ", golog.LstdFlags)
 var critical = golog.New(os.Stdout, "\033[41mCRITICAL ", golog.LstdFlags)
