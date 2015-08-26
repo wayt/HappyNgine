@@ -157,6 +157,7 @@ func taskRunner() {
 			continue
 		}
 
+		log.Debugln("TASK: running:", ts.Name)
 		t.call(ts.Args...)
 	}
 }
