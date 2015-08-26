@@ -22,8 +22,8 @@ func init() {
 
 	Client = goredis.NewClient(&goredis.Options{
 		Addr:        env.Get("REDIS_PORT_6379_TCP_ADDR") + ":" + env.Get("REDIS_PORT_6379_TCP_PORT"),
-		Password:    "", // no password set
-		DB:          0,  // use default DB
+		Password:    env.Get("HAPPY_REDIS_PASSWORD"),
+		DB:          int64(env.GetInt("HAPPY_REDIS_DB")),
 		PoolSize:    poolSize,
 		PoolTimeout: poolTimeout,
 	})
