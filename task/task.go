@@ -28,6 +28,11 @@ func init() {
 		poolTimeout = time.Second * 5
 	}
 
+	if env.Get("REDIS_TASK_PORT_6379_TCP_ADDR") == "" && env.Get("REDIS_TASK_PORT_6379_TCP_PORT") == "" {
+		log.Warningln("Unconfigured redis task...")
+		return
+	}
+
 	redisCli = redis.NewClient(&redis.Options{
 		Addr:        env.Get("REDIS_TASK_PORT_6379_TCP_ADDR") + ":" + env.Get("REDIS_TASK_PORT_6379_TCP_PORT"),
 		Password:    env.Get("HAPPY_REDIS_TASK_PASSWORD"),
