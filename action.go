@@ -24,6 +24,11 @@ func (this *Action) IsValid() bool {
 		return false
 	}
 
+	// In case of custom AddError in action New
+	if this.HasErrors() {
+		return false
+	}
+
 	if this.Form == nil {
 		return true
 	}
