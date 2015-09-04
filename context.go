@@ -5,21 +5,33 @@ import (
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
+var hostname = ""
+
+func init() {
+
+	var err error
+	hostname, err = os.Hostname()
+	if err != nil || hostname == "" {
+		hostname = env.Get("NODE_NAME")
+	}
+}
+
 type Context struct {
-	Request            *http.Request
-	Response           http.ResponseWriter
-	Middlewares        []MiddlewareInterface
-	API                *API
-	UserData           map[string]interface{}
-	ResponseStatusCode int // Because we can't retrieve the status from http.ResponseWriter
-	RequestId          string
-	Errors             map[string]string
-	ErrorCode          int
+	Request            *http.Request          `json:"request"`
+	Response           http.ResponseWriter    `json:"-"`
+	Middlewares        []MiddlewareInterface  `json:"-"`
+	API                *API                   `json:"-"`
+	UserData           map[string]interface{} `json:"user_data"`
+	ResponseStatusCode int                    `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
+	RequestId          string                 `json:"request_id"`
+	Errors             map[string]string      `json:"-"`
+	ErrorCode          int                    `json:"-"`
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -109,8 +121,8 @@ func (c *Context) SendByte(code int, data []byte, headers ...string) {
 	}
 
 	c.Response.Header().Add("X-happyngine-request-id", c.RequestId)
-	if node := env.Get("NODE_NAME"); node != "" {
-		c.Response.Header().Add("X-happyngine-node", node)
+	if hostname != "" {
+		c.Response.Header().Add("X-happyngine-node", hostname)
 	}
 
 	if !hasMime {
