@@ -46,11 +46,13 @@ func randomHost() string {
 
 func newRequest(method, path string, body []byte) (req *http.Request, err error) {
 
-	host := &url.URL{
-		Scheme: "http",
-		Host:   randomHost(),
-		Path:   path,
+	host, err := url.Parse(path)
+	if err != nil {
+		return nil, err
 	}
+
+	host.Scheme = "http"
+	host.Host = randomHost()
 
 	if body != nil {
 
@@ -112,7 +114,16 @@ func Index(_type, id string, obj interface{}) (*IndexResult, error) {
 		return nil, err
 	}
 
-	req, err := newRequest("PUT", fmt.Sprintf("/%s/%s/%s", Config.Index, _type, id), body)
+	var req *http.Request
+
+	if id == "" {
+		req, err = newRequest("POST", fmt.Sprintf("/%s/%s", Config.Index, _type), body)
+	} else {
+		req, err = newRequest("PUT", fmt.Sprintf("/%s/%s/%s", Config.Index, _type, id), body)
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	var resp IndexResult
 	if err := do(req, &resp); err != nil {
@@ -240,9 +251,21 @@ type SearchResult struct {
 	Error        string        `json:"error,omitempty"` // used in MultiSearch only
 }
 
-func Search(_type, query string) (*SearchResult, error) {
+type SearchQuery struct {
+	QueryBody string
+	From      int
+	Size      int
+}
 
-	req, err := newRequest("POST", fmt.Sprintf("/%s/%s/_search", Config.Index, _type), []byte(query))
+func Search(_type string, query SearchQuery) (*SearchResult, error) {
+
+	requestStr := fmt.Sprintf("/%s/%s/_search", Config.Index, _type)
+	if query.Size > 0 {
+
+		requestStr += fmt.Sprintf("?from=%d&size=%d", query.From, query.Size)
+	}
+
+	req, err := newRequest("POST", requestStr, []byte(query.QueryBody))
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +335,26 @@ func Delete(_type, id string) (*DeleteResult, error) {
 	}
 
 	return resp, nil
+}
 
+type DeleteByQueryResult struct {
+	Indice map[string]interface{} `json:"_indices"`
+}
+
+func DeleteByQuery(_type, body string) (*DeleteByQueryResult, error) {
+
+	req, err := newRequest("DELETE", fmt.Sprintf("/%s/%s/_query", Config.Index, _type), []byte(body))
+	if err != nil {
+		return nil, err
+	}
+
+	resp := new(DeleteByQueryResult)
+	if err := do(req, resp); err != nil {
+
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 type PingResult struct {
