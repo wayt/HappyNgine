@@ -257,6 +257,13 @@ type SearchQuery struct {
 	Size      int
 }
 
+func ASearch(_type, query string) (*SearchResult, error) {
+
+	return Search(_type, SearchQuery{
+		QueryBody: query,
+	})
+}
+
 func Search(_type string, query SearchQuery) (*SearchResult, error) {
 
 	requestStr := fmt.Sprintf("/%s/%s/_search", Config.Index, _type)
