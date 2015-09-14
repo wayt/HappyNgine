@@ -28,7 +28,11 @@ func (t JSONTime) MarshalCQL(info gocql.TypeInfo) ([]byte, error) {
 
 	switch info.Type() {
 	case gocql.TypeTimestamp:
-		return encBigInt(t.Unix()), nil
+		if t.Unix() == 0 {
+			return []byte{}, nil
+		}
+		x := int64(t.UTC().Unix()*1e3) + int64(t.UTC().Nanosecond()/1e6)
+		return encBigInt(x), nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("can not marshal JSONTime into %s", info))
@@ -38,7 +42,13 @@ func (t *JSONTime) UnmarshalCQL(info gocql.TypeInfo, data []byte) error {
 
 	switch info.Type() {
 	case gocql.TypeTimestamp:
-		*t = Unix(bytesToInt64(data), 0)
+		if len(data) == 0 {
+			return nil
+		}
+		x := decBigInt(data)
+		sec := x / 1000
+		nsec := (x - sec*1000) * 1000000
+		*t = JSONTime{Unix(sec, nsec).In(time.UTC)}
 		return nil
 	}
 
@@ -50,9 +60,12 @@ func encBigInt(x int64) []byte {
 		byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x)}
 }
 
-func bytesToInt64(data []byte) (ret int64) {
-	for i := range data {
-		ret |= int64(data[i]) << (8 * uint(len(data)-i-1))
+func decBigInt(data []byte) int64 {
+	if len(data) != 8 {
+		return 0
 	}
-	return ret
+	return int64(data[0])<<56 | int64(data[1])<<48 |
+		int64(data[2])<<40 | int64(data[3])<<32 |
+		int64(data[4])<<24 | int64(data[5])<<16 |
+		int64(data[6])<<8 | int64(data[7])
 }
