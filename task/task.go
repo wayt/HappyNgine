@@ -196,6 +196,7 @@ func taskScheduler() {
 			log.Errorln("TASK: redisCli.ZAdd:", task.Name, timestamp, err)
 
 			scheduledTasks.Enqueue(task)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
