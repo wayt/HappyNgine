@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"errors"
+	"git.my-sign.com/backend/coreapi/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
@@ -15,6 +16,7 @@ var redisCli *redis.Client
 var scheduledTasksKey = "scheduled_tasks" // Tasks pushed by the cli, waiting to be push in todo
 var todoTasksKey = "todo_tasks"           // Tasks pushed by the scheduler, waiting to be executed
 var tasks map[string]*Task
+var scheduledTasks *utils.LCFifo
 
 func init() {
 
@@ -42,10 +44,13 @@ func init() {
 	})
 
 	tasks = make(map[string]*Task)
+	scheduledTasks = utils.NewListCFifo()
 
 	for i := 0; i < 4; i++ {
 		go taskRunner()
 	}
+
+	go taskScheduler()
 }
 
 type Task struct {
@@ -89,22 +94,17 @@ func (ts *TaskSchedule) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &ts)
 }
 
-func (t *Task) Schedule(tm time.Time, args ...interface{}) error {
+func (t *Task) Schedule(tm time.Time, args ...interface{}) {
 
-	timestamp := tm.UTC().Unix()
+	utc := tm.UTC()
 
 	sc := &TaskSchedule{
 		Name: t.Name,
 		Args: args,
-		Time: time.Now(),
+		Time: utc,
 	}
 
-	err := redisCli.ZAdd(scheduledTasksKey, redis.Z{
-		Score:  float64(timestamp),
-		Member: sc,
-	}).Err()
-
-	return err
+	scheduledTasks.Enqueue(sc)
 }
 
 func (t *Task) call(args ...interface{}) error {
@@ -143,26 +143,59 @@ func (t *Task) call(args ...interface{}) error {
 
 func taskRunner() {
 	for {
-		task, err := redisCli.BLPop(0, todoTasksKey).Result()
-		if err != nil {
-			log.Errorln("taskRunner: redisCli.BLPop:", err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
+		func() {
 
-		ts := &TaskSchedule{}
-		if err := ts.UnmarshalBinary([]byte(task[1])); err != nil {
-			log.Errorln("taskRunner: UnmarshalBinary:", err)
-			continue
-		}
+			defer func() {
+				if err := recover(); err != nil {
+					log.Criticalln("TASK:", err)
+				}
+			}()
 
-		t, ok := tasks[ts.Name]
+			task, err := redisCli.BLPop(0, todoTasksKey).Result()
+			if err != nil {
+				log.Errorln("TASK: redisCli.BLPop:", err)
+				time.Sleep(1 * time.Second)
+				return
+			}
+
+			ts := &TaskSchedule{}
+			if err := ts.UnmarshalBinary([]byte(task[1])); err != nil {
+				log.Errorln("TASK: UnmarshalBinary:", err)
+				return
+			}
+
+			t, ok := tasks[ts.Name]
+			if !ok {
+				log.Errorln("TASK: unknown task:", ts.Name)
+				return
+			}
+
+			log.Debugln("TASK: running:", ts.Name)
+			t.call(ts.Args...)
+		}()
+	}
+}
+
+func taskScheduler() {
+	for true {
+
+		i, ok := scheduledTasks.Dequeue()
 		if !ok {
-			log.Errorln("taskRunner: unknown task:", ts.Name)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
-		log.Debugln("TASK: running:", ts.Name)
-		t.call(ts.Args...)
+		task := i.(*TaskSchedule)
+
+		timestamp := task.Time.Unix()
+
+		if err := redisCli.ZAdd(scheduledTasksKey, redis.Z{
+			Score:  float64(timestamp),
+			Member: task,
+		}).Err(); err != nil {
+			log.Errorln("TASK: redisCli.ZAdd:", task.Name, timestamp, err)
+
+			scheduledTasks.Enqueue(task)
+		}
 	}
 }
