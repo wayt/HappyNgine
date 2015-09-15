@@ -91,7 +91,7 @@ func (ts *TaskSchedule) UnmarshalBinary(data []byte) error {
 
 func (t *Task) Schedule(tm time.Time, args ...interface{}) error {
 
-	timestamp := tm.Unix()
+	timestamp := tm.UTC().Unix()
 
 	sc := &TaskSchedule{
 		Name: t.Name,
