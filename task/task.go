@@ -9,6 +9,7 @@ import (
 	"github.com/wayt/happyngine/log"
 	"gopkg.in/redis.v3"
 	"reflect"
+	"runtime"
 	"time"
 )
 
@@ -147,7 +148,11 @@ func taskRunner() {
 
 			defer func() {
 				if err := recover(); err != nil {
-					log.Criticalln("TASK:", err)
+
+					trace := make([]byte, 1024)
+					runtime.Stack(trace, true)
+
+					log.Criticalln("TASK:", err, string(trace))
 				}
 			}()
 
