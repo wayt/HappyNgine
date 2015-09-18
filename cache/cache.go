@@ -8,7 +8,13 @@ import (
 
 var Store *gocache.Cache
 
+var disabledCache = env.GetBool("DISABLE_MEMORY_CACHE")
+
 func init() {
+
+	if disabledCache {
+		return
+	}
 
 	defExpire := env.GetInt("HAPPYNGINE_DEFAULT_CACHE_EXPIRATION")
 	if defExpire <= 0 {
@@ -33,13 +39,24 @@ const (
 )
 
 func Set(k string, x interface{}, d time.Duration) {
+
+	if disabledCache {
+		return
+	}
+
 	Store.Set(k, x, d)
 }
 
 func Get(k string) (interface{}, bool) {
+	if disabledCache {
+		return nil, false
+	}
 	return Store.Get(k)
 }
 
 func Delete(k string) {
+	if disabledCache {
+		return
+	}
 	Store.Delete(k)
 }
