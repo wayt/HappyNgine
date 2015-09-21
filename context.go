@@ -2,6 +2,7 @@ package happyngine
 
 import (
 	//"code.google.com/p/go-uuid/uuid"
+	"encoding/json"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
 	"net/http"
@@ -97,6 +98,16 @@ func (c *Context) GetURLInt64Param(key string) int64 {
 	}
 
 	return value
+}
+
+func (c *Context) JSON(code int, obj interface{}) {
+
+	data, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+
+	c.SendByte(code, data, "Content-Type: application/json")
 }
 
 func (c *Context) Send(code int, text string, headers ...string) {

@@ -28,6 +28,8 @@ func NewAPI() *API {
 	return this
 }
 
+type M map[string]interface{}
+
 func (this *API) AddResource(name string, resource interface{}) {
 
 	this.Resources[name] = resource
