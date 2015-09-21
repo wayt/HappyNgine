@@ -7,10 +7,18 @@ import (
 	"github.com/mitchellh/goamz/s3"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
+	"io"
+	"net"
 	"time"
 )
 
 var S3 *s3.S3
+
+var attempts = aws.AttemptStrategy{
+	Min:   5,
+	Total: 5 * time.Second,
+	Delay: 200 * time.Millisecond,
+}
 
 func init() {
 
@@ -32,6 +40,31 @@ const (
 	BucketOwnerFull   = s3.ACL("bucket-owner-full-control")
 )
 
+func shouldRetry(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch err {
+	case io.ErrUnexpectedEOF, io.EOF:
+		return true
+	}
+	switch e := err.(type) {
+	case *net.DNSError:
+		return true
+	case *net.OpError:
+		switch e.Op {
+		case "read", "write":
+			return true
+		}
+	case *s3.Error:
+		switch e.Code {
+		case "InternalError", "NoSuchUpload", "NoSuchBucket":
+			return true
+		}
+	}
+	return false
+}
+
 func PutHeader(bucket, path string, data []byte, contentType string, headers map[string][]string, perm s3.ACL) error {
 
 	b := S3.Bucket(bucket)
@@ -45,7 +78,15 @@ func PutHeader(bucket, path string, data []byte, contentType string, headers map
 
 	headers["Content-Type"] = []string{contentType}
 
-	return b.PutHeader(path, data, headers, perm)
+	var err error
+	for attempt := attempts.Start(); attempt.Next(); {
+		err := b.PutHeader(path, data, headers, perm)
+		if !shouldRetry(err) {
+			break
+		}
+	}
+
+	return err
 }
 
 func Put(bucket, path string, data []byte, contentType string, perm s3.ACL) error {
