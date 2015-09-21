@@ -47,7 +47,12 @@ func init() {
 	tasks = make(map[string]*Task)
 	scheduledTasks = utils.NewListCFifo()
 
-	for i := 0; i < 4; i++ {
+	taskRunnerThreads := env.GetInt("HAPPY_TASK_RUNNER_THREADS")
+	if taskRunnerThreads == 0 {
+		taskRunnerThreads = runtime.NumCPU()
+	}
+
+	for i := 0; i < taskRunnerThreads; i++ {
 		go taskRunner()
 	}
 
