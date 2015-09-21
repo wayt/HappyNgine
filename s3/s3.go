@@ -32,14 +32,25 @@ const (
 	BucketOwnerFull   = s3.ACL("bucket-owner-full-control")
 )
 
-func Put(bucket, path string, data []byte, contentType string, perm s3.ACL) error {
+func PutHeader(bucket, path string, data []byte, contentType string, headers map[string][]string, perm s3.ACL) error {
 
 	b := S3.Bucket(bucket)
 	if b == nil {
 		return errors.New("Unknown bucket: " + bucket)
 	}
 
-	return b.Put(path, data, contentType, perm)
+	if headers == nil {
+		headers = make(map[string][]string)
+	}
+
+	headers["Content-Type"] = []string{contentType}
+
+	return b.PutHeader(path, data, headers, perm)
+}
+
+func Put(bucket, path string, data []byte, contentType string, perm s3.ACL) error {
+
+	return PutHeader(bucket, path, data, contentType, nil, perm)
 }
 
 func SignedURL(bucket, path string, expires time.Time) string {
