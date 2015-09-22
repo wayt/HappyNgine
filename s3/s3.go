@@ -108,7 +108,16 @@ func Get(bucket, path string) ([]byte, error) {
 	if b == nil {
 		return nil, errors.New("Unknown bucket: " + bucket)
 	}
-	return b.Get(path)
+	var err error
+	var data []byte
+	for attempt := attempts.Start(); attempt.Next(); {
+		data, err = b.Get(path)
+		if !shouldRetry(err) {
+			break
+		}
+	}
+
+	return data, err
 }
 
 func Del(bucket, path string) error {
