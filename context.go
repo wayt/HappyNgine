@@ -1,7 +1,6 @@
 package happyngine
 
 import (
-	//"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
@@ -24,15 +23,14 @@ func init() {
 }
 
 type Context struct {
-	Request            *http.Request          `json:"request"`
-	Response           http.ResponseWriter    `json:"-"`
-	Middlewares        []MiddlewareInterface  `json:"-"`
-	API                *API                   `json:"-"`
-	UserData           map[string]interface{} `json:"user_data"`
-	ResponseStatusCode int                    `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
-	RequestId          string                 `json:"request_id"`
-	Errors             map[string]string      `json:"-"`
-	ErrorCode          int                    `json:"-"`
+	Request            *http.Request         `json:"-"`
+	Response           http.ResponseWriter   `json:"-"`
+	Middlewares        []MiddlewareInterface `json:"-"`
+	API                *API                  `json:"-"`
+	Session            *Session              `json:"-"`
+	ResponseStatusCode int                   `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
+	Errors             map[string]string     `json:"-"`
+	ErrorCode          int                   `json:"-"`
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -42,13 +40,31 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 	c.Request = req
 	c.Response = resp
 	c.API = api
-	c.UserData = make(map[string]interface{})
 	c.ResponseStatusCode = 200
 	c.Errors = make(map[string]string)
 
-	c.RequestId = "42" // uuid.New()
-
 	return c
+}
+
+// Session may be nil
+func (c *Context) FetchSession(name string) *Session {
+
+	sess := GetSession(c.Request, name)
+	c.Session = sess
+
+	return sess
+}
+
+func (c *Context) NewSession(name string) *Session {
+
+	c.Session = NewSession(name, &SessionOptions{
+		Path:     "/",
+		MaxAge:   env.GetInt("SESSION_MAX_AGE"),
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	return c.Session
 }
 
 func (c *Context) GetParam(key string) string {
@@ -131,7 +147,6 @@ func (c *Context) SendByte(code int, data []byte, headers ...string) {
 		}
 	}
 
-	c.Response.Header().Add("X-happyngine-request-id", c.RequestId)
 	if hostname != "" {
 		c.Response.Header().Add("X-happyngine-node", hostname)
 	}
@@ -153,6 +168,12 @@ func (c *Context) SendByte(code int, data []byte, headers ...string) {
 		c.Response.Header().Add(k, v)
 	}
 
+	if c.Session != nil {
+		if c.Session.Changed() {
+			c.Session.Save(c.Request, c.Response)
+		}
+	}
+
 	c.Response.WriteHeader(code)
 	c.Response.Write(data)
 	c.ResponseStatusCode = code
@@ -172,19 +193,19 @@ func (c *Context) RemoteIP() string {
 }
 
 func (c *Context) Debugln(args ...interface{}) {
-	log.Debugln(append([]interface{}{c.RequestId}, args...))
+	log.Debugln(args)
 }
 
 func (c *Context) Warningln(args ...interface{}) {
-	log.Warningln(append([]interface{}{c.RequestId}, args...))
+	log.Warningln(args)
 }
 
 func (c *Context) Errorln(args ...interface{}) {
-	log.Errorln(append([]interface{}{c.RequestId}, args...))
+	log.Errorln(args)
 }
 
 func (c *Context) Criticalln(args ...interface{}) {
-	log.Criticalln(append([]interface{}{c.RequestId}, args...))
+	log.Criticalln(args)
 }
 
 func (c *Context) AddError(code int, text string) {
