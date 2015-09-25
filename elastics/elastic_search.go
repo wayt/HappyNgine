@@ -255,6 +255,7 @@ type SearchQuery struct {
 	QueryBody string
 	From      int
 	Size      int
+	Sort      string
 }
 
 func ASearch(_type, query string) (*SearchResult, error) {
@@ -267,10 +268,15 @@ func ASearch(_type, query string) (*SearchResult, error) {
 func Search(_type string, query SearchQuery) (*SearchResult, error) {
 
 	requestStr := fmt.Sprintf("/%s/%s/_search", Config.Index, _type)
+	params := []string{fmt.Sprintf("from=%d", query.From)}
 	if query.Size > 0 {
-
-		requestStr += fmt.Sprintf("?from=%d&size=%d", query.From, query.Size)
+		params = append(params, fmt.Sprintf("size=%d", query.Size))
 	}
+	if query.Sort != "" {
+		params = append(params, fmt.Sprintf("sort=%s", query.Sort))
+	}
+
+	requestStr += "?" + strings.Join(params, "&")
 
 	req, err := newRequest("POST", requestStr, []byte(query.QueryBody))
 	if err != nil {
