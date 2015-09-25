@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
+type Order int
+
 const (
-	ASC = iota
+	ASC Order = iota
 	DESC
 )
 
@@ -47,7 +49,7 @@ func (q *selectQuery) Where(condition string, values ...interface{}) *selectQuer
 	return q
 }
 
-func (q *selectQuery) OrderBy(param string, order int) *selectQuery {
+func (q *selectQuery) OrderBy(param string, order Order) *selectQuery {
 
 	q.orderBy = " ORDER BY " + param
 
