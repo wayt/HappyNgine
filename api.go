@@ -1,9 +1,7 @@
 package happyngine
 
 import (
-	"github.com/wayt/happyngine/log"
 	"net/http"
-	"strings"
 )
 
 type ErrorHandler func(*Context, interface{})
@@ -12,7 +10,6 @@ type API struct {
 	Middlewares     []MiddlewareHandler
 	Resources       map[string]interface{}
 	Error404Handler ErrorHandler
-	PanicHandler    ErrorHandler
 	Router          Router
 	Headers         map[string]string
 }
@@ -22,7 +19,6 @@ func NewAPI() *API {
 	this := new(API)
 	this.Resources = make(map[string]interface{})
 	this.Error404Handler = this.error404Handler
-	this.PanicHandler = this.panicHandler
 	this.Headers = make(map[string]string)
 
 	return this
@@ -59,69 +55,22 @@ func (this *API) error404Handler(context *Context, err interface{}) {
 	context.Response.Write([]byte("404 Not Found"))
 }
 
-func (this *API) panicHandler(context *Context, err interface{}) {
-
-	context.Response.WriteHeader(500)
-	context.Response.Write([]byte("Internal Server Error"))
-}
-
 func (this *API) preDispatch(route *Route, context *Context) error {
 
-	for _, middlewareHandler := range append(this.Middlewares, route.Middlewares...) {
-
-		m := middlewareHandler(context)
-		context.Middlewares = append(context.Middlewares, m)
-		if err := m.HandleBefore(); err != nil {
-
-			return err
-		}
-	}
+	context.middlewares = append(this.Middlewares, route.Middlewares...)
+	context.action = route.ActionHandler
 
 	return nil
 }
 
-func (this *API) dispatch(route *Route, context *Context) {
+func (this *API) dispatch(route *Route, c *Context) {
 
-	action := route.ActionHandler(context)
-
-	if action.IsValid() {
-
-		action.Run()
-	}
-
-	errors, code := context.GetErrors()
-	if len(errors) != 0 {
-
-		response := `{"error":["` + strings.Join(errors, `","`) + `"]}`
-		action.Send(code, response)
-	}
-}
-
-func (this *API) postDispatch(context *Context) {
-
-	for _, m := range context.Middlewares {
-
-		m.HandleAfter()
-	}
+	c.Next()
 }
 
 func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
-	fullPath := req.URL.Path
-	if req.URL.RawQuery != "" {
-		fullPath += "?" + req.URL.RawQuery
-	}
-	log.Debugln("API:", req.Method, fullPath)
-
 	context := NewContext(req, resp, this)
-
-	// Panic handler
-	defer func() {
-		if r := recover(); r != nil {
-
-			this.PanicHandler(context, r)
-		}
-	}()
 
 	route, err := this.Router.FindRoute(req)
 	if err != nil {
@@ -131,15 +80,10 @@ func (this *API) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := this.preDispatch(route, context); err != nil {
-
-		// Excute HandleAfter for executed middleware
-		this.postDispatch(context)
 		return
 	}
 
 	this.dispatch(route, context)
-
-	this.postDispatch(context)
 }
 
 func (this *API) Run(host string) error {

@@ -23,15 +23,17 @@ func init() {
 }
 
 type Context struct {
-	Request            *http.Request         `json:"-"`
-	Response           http.ResponseWriter   `json:"-"`
-	Middlewares        []MiddlewareInterface `json:"-"`
-	API                *API                  `json:"-"`
-	Session            *Session              `json:"-"`
-	ResponseStatusCode int                   `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
-	ResponseLength     int                   `json:"-"`
-	Errors             map[string]string     `json:"-"`
-	ErrorCode          int                   `json:"-"`
+	Request            *http.Request       `json:"-"`
+	Response           http.ResponseWriter `json:"-"`
+	API                *API                `json:"-"`
+	Session            *Session            `json:"-"`
+	ResponseStatusCode int                 `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
+	ResponseLength     int                 `json:"-"`
+	Errors             map[string]string   `json:"-"`
+	ErrorCode          int                 `json:"-"`
+	currentMiddleware  int
+	middlewares        []MiddlewareHandler
+	action             ActionHandler
 }
 
 func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context {
@@ -43,8 +45,38 @@ func NewContext(req *http.Request, resp http.ResponseWriter, api *API) *Context 
 	c.API = api
 	c.ResponseStatusCode = 200
 	c.Errors = make(map[string]string)
+	c.currentMiddleware = -1
 
 	return c
+}
+
+func (c *Context) Next() {
+
+	c.currentMiddleware += 1
+
+	if len(c.middlewares) <= c.currentMiddleware {
+
+		// Process action
+		action := c.action(c)
+
+		if action.IsValid() {
+
+			action.Run()
+		}
+
+	} else {
+		next := c.middlewares[c.currentMiddleware]
+		next(c)
+	}
+
+	if c.ResponseLength == 0 {
+		errors, code := c.GetErrors()
+		if len(errors) != 0 {
+
+			response := `{"error":["` + strings.Join(errors, `","`) + `"]}`
+			c.Send(code, response)
+		}
+	}
 }
 
 // Session may be nil
