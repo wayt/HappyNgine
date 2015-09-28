@@ -3,11 +3,14 @@ package task
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"git.my-sign.com/backend/coreapi/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
 	"gopkg.in/redis.v3"
+	"io"
+	"os"
 	"reflect"
 	"runtime"
 	"time"
@@ -18,6 +21,7 @@ var scheduledTasksKey = "scheduled_tasks" // Tasks pushed by the cli, waiting to
 var todoTasksKey = "todo_tasks"           // Tasks pushed by the scheduler, waiting to be executed
 var tasks map[string]*Task
 var scheduledTasks *utils.LCFifo
+var logger io.Writer = os.Stdout
 
 func init() {
 
@@ -43,6 +47,17 @@ func init() {
 		PoolSize:    poolSize,
 		PoolTimeout: poolTimeout,
 	})
+
+	taskLogFile := env.Get("TASK_LOG_FILE")
+	if taskLogFile != "" {
+		f, err := os.OpenFile(taskLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			panic(err)
+		}
+		// defer f.Close()
+
+		logger = f
+	}
 
 	tasks = make(map[string]*Task)
 	scheduledTasks = utils.NewListCFifo()
@@ -149,6 +164,11 @@ func (t *Task) call(args ...interface{}) error {
 
 func taskRunner() {
 	for {
+
+		taskName := ""
+		var startTime time.Time
+		status := 200
+
 		func() {
 
 			defer func() {
@@ -158,6 +178,7 @@ func taskRunner() {
 					runtime.Stack(trace, true)
 
 					log.Criticalln("TASK:", err, string(trace))
+					status = 500
 				}
 			}()
 
@@ -174,6 +195,8 @@ func taskRunner() {
 				return
 			}
 
+			taskName = ts.Name
+
 			t, ok := tasks[ts.Name]
 			if !ok {
 				log.Errorln("TASK: unknown task:", ts.Name)
@@ -181,8 +204,15 @@ func taskRunner() {
 			}
 
 			log.Debugln("TASK: running:", ts.Name)
+			startTime = time.Now()
 			t.call(ts.Args...)
 		}()
+
+		took := time.Since(startTime)
+
+		if _, err := fmt.Fprintf(logger, "%s [%s] %d %d\n", taskName, time.Now().Format("2/Jan/2006:15:04:05 -0700"), status, took.Nanoseconds()/1000000); err != nil {
+			log.Errorln("taskRunner:", err)
+		}
 	}
 }
 
