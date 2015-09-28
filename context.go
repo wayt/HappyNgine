@@ -29,6 +29,7 @@ type Context struct {
 	API                *API                  `json:"-"`
 	Session            *Session              `json:"-"`
 	ResponseStatusCode int                   `json:"-"` // Because we can't retrieve the status from http.ResponseWriter
+	ResponseLength     int                   `json:"-"`
 	Errors             map[string]string     `json:"-"`
 	ErrorCode          int                   `json:"-"`
 }
@@ -175,7 +176,7 @@ func (c *Context) SendByte(code int, data []byte, headers ...string) {
 	}
 
 	c.Response.WriteHeader(code)
-	c.Response.Write(data)
+	c.ResponseLength, _ = c.Response.Write(data)
 	c.ResponseStatusCode = code
 }
 
