@@ -31,6 +31,8 @@ func init() {
 	DB.DB().SetMaxIdleConns(maxIdleConns)
 	DB.DB().SetMaxOpenConns(maxOpenConns)
 
+	DB.LogMode(env.Get("DEBUG") == "1")
+
 	go func() {
 		for true {
 			time.Sleep(time.Duration(pingInterval) * time.Second)
