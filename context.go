@@ -90,11 +90,13 @@ func (c *Context) FetchSession(name string) *Session {
 
 func (c *Context) NewSession(name string) *Session {
 
+	secure := env.Get("SECURE_COOKIE")
+
 	c.Session = NewSession(name, &SessionOptions{
 		Path:     "/",
 		MaxAge:   env.GetInt("SESSION_MAX_AGE"),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secure != "false",
 	})
 
 	return c.Session
