@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var DB gorm.DB
+var DB *gorm.DB
 
 func init() {
 
@@ -22,23 +22,24 @@ func init() {
 	maxIdleConns := env.GetInt("HAPPY_SQL_MAX_IDLE_CONNS")
 	maxOpenConns := env.GetInt("HAPPY_SQL_MAX_OPEN_CONNS")
 
-	var err error
-	DB, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=UTC", username, password, host, port, dbName))
+	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=UTC", username, password, host, port, dbName))
 	if err != nil {
 		panic(err)
 	}
 
-	DB.DB().SetMaxIdleConns(maxIdleConns)
-	DB.DB().SetMaxOpenConns(maxOpenConns)
+	db.DB().SetMaxIdleConns(maxIdleConns)
+	db.DB().SetMaxOpenConns(maxOpenConns)
 
-	DB.LogMode(env.Get("DEBUG") == "1")
+	db.LogMode(env.Get("DEBUG") == "1")
+
+	DB = &db
 
 	go func() {
 		for true {
 			time.Sleep(time.Duration(pingInterval) * time.Second)
 
 			log.Debugln("Ping sql to keep-alive...")
-			DB.DB().Ping()
+			db.DB().Ping()
 		}
 	}()
 }
