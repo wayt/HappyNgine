@@ -6,11 +6,34 @@ import (
 	"os"
 )
 
-var debug = golog.New(os.Stdout, "DEBUG ", golog.LstdFlags)
-var info = golog.New(os.Stdout, "INFO ", golog.LstdFlags)
-var warning = golog.New(os.Stdout, "\033[33mWARNING ", golog.LstdFlags)
-var err = golog.New(os.Stdout, "\033[41mERROR ", golog.LstdFlags)
-var critical = golog.New(os.Stdout, "\033[41mCRITICAL ", golog.LstdFlags)
+var (
+	debug    *golog.Logger
+	info     *golog.Logger
+	warning  *golog.Logger
+	err      *golog.Logger
+	critical *golog.Logger
+)
+
+func init() {
+
+	logger := os.Stdout
+	logFile := env.Get("LOG_FILE")
+	if logFile != "" {
+		f, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			panic(err)
+		}
+		// defer f.Close()
+
+		logger = f
+	}
+
+	debug = golog.New(logger, "DEBUG ", golog.LstdFlags)
+	info = golog.New(logger, "INFO ", golog.LstdFlags)
+	warning = golog.New(logger, "\033[33mWARNING ", golog.LstdFlags)
+	err = golog.New(logger, "\033[41mERROR ", golog.LstdFlags)
+	critical = golog.New(logger, "\033[41mCRITICAL ", golog.LstdFlags)
+}
 
 func Debugln(args ...interface{}) {
 	if env.Get("DEBUG") == "1" {
