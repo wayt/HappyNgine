@@ -93,6 +93,7 @@ func Transaction(queries ...func(tx *gorm.DB) error) error {
 
 		// Tell to not rollback this one
 		rollback = false
+		break // we're done
 	}
 
 	return lastErr
