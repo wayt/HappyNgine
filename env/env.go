@@ -40,13 +40,13 @@ func init() {
 // Return a value from environement
 func Get(name string) string {
 
-	if name[0] == '$' {
-		return Get(name[1:])
-	}
-
 	v, ok := Env[name]
 	if !ok {
 		return ""
+	}
+
+	if len(v) > 1 && v[0] == '$' {
+		return Get(v[1:])
 	}
 
 	return v
