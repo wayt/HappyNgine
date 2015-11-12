@@ -4,11 +4,14 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 var Env map[string]string
+
+var envRegexp = regexp.MustCompile(`\$[A-Z0-9_]+`)
 
 func init() {
 
@@ -45,8 +48,12 @@ func Get(name string) string {
 		return ""
 	}
 
-	if len(v) > 1 && v[0] == '$' {
-		return Get(v[1:])
+	if len(v) > 1 {
+
+		matchs := envRegexp.FindAllString(v, -1)
+		for _, m := range matchs {
+			v = strings.Replace(v, m, Get(m[1:]), 1)
+		}
 	}
 
 	return v
