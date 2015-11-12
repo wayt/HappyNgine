@@ -144,8 +144,6 @@ func getNewTask() *TaskSchedule {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-
-		log.Debugln("TASK:, status:", resp.StatusCode)
 		return nil
 	}
 
@@ -247,8 +245,6 @@ func taskScheduler() {
 			log.Errorln("TASK: failed to marshal:", task, err)
 			continue
 		}
-
-		log.Debugln("body:", string(data))
 
 		resp, err := http.Post(fmt.Sprintf("%s/tasks", taskAPI), "application/json", bytes.NewReader(data))
 		if err != nil {
