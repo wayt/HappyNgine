@@ -219,9 +219,30 @@ func taskRunner() {
 		}
 
 		log.Debugln("TASK: running:", ts.Name)
-		t.call(ts.Params...)
+		ch := make(chan error)
+		go func() {
 
-		putTask(ts.Id, "done", nil)
+			defer func() {
+				if err := recover(); err != nil {
+
+					trace := make([]byte, 2048)
+					runtime.Stack(trace, true)
+
+					log.Criticalln(err, string(trace))
+					ch <- errors.New(string(trace))
+				} else {
+					ch <- nil
+				}
+			}()
+
+			t.call(ts.Params...)
+		}()
+
+		if err := <-ch; err != nil {
+			putTask(ts.Id, "error", err)
+		} else {
+			putTask(ts.Id, "done", nil)
+		}
 
 		// took := time.Since(startTime)
 		//
