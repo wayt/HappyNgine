@@ -212,7 +212,7 @@ func taskRunner() {
 		if !ok {
 			log.Errorln("TASK: unknown task:", ts.Name)
 			putTask(ts.Id, "error", errors.New("Unknown task name"))
-			return
+			continue
 		}
 
 		log.Debugln("TASK: running:", ts.Name)
