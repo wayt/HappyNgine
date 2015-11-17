@@ -200,6 +200,9 @@ func putTask(id, status string, err error) {
 }
 
 func taskRunner() {
+
+	time.Sleep(15 * time.Second)
+
 	for {
 
 		ts := getNewTask()
