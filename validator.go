@@ -1,6 +1,7 @@
 package happyngine
 
 import (
+	"github.com/asaskevich/govalidator"
 	"regexp"
 	"strconv"
 	"time"
@@ -38,6 +39,19 @@ func IsEqual(refs ...string) FormValidatorHandler {
 func IsEmail() FormValidatorHandler {
 
 	return RegexpFormValidator(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$`)
+}
+
+func IsFloat() FormValidatorHandler {
+
+	return func(c *Context, e FormElementInterface) {
+
+		if !govalidator.IsFloat(e.FormValue()) {
+			c.AddError(400, e.Error())
+		}
+
+		v, _ := strconv.ParseFloat(e.FormValue(), 64)
+		e.SetValue(v)
+	}
 }
 
 func IsInteger() FormValidatorHandler {
