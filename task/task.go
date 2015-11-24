@@ -270,25 +270,28 @@ func taskScheduler() {
 			continue
 		}
 
-		resp, err := http.Post(fmt.Sprintf("%s/tasks", taskAPI), "application/json", bytes.NewReader(data))
-		if err != nil {
-			log.Errorln("TASK: failed to post task:", task, err)
+		func() {
+			resp, err := http.Post(fmt.Sprintf("%s/tasks", taskAPI), "application/json", bytes.NewReader(data))
+			if err != nil {
+				log.Errorln("TASK: failed to post task:", task, err)
 
-			// Requeue task
-			scheduledTasks.Enqueue(task)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		defer resp.Body.Close()
+				// Requeue task
+				scheduledTasks.Enqueue(task)
+				time.Sleep(500 * time.Millisecond)
+				return
+			}
+			defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusCreated {
-			data, err = ioutil.ReadAll(resp.Body)
-			log.Errorln("TASK: failed to create task:", resp.Status, string(data), err)
+			if resp.StatusCode != http.StatusCreated {
+				data, err = ioutil.ReadAll(resp.Body)
+				log.Errorln("TASK: failed to create task:", resp.Status, string(data), err)
 
-			// Requeue task
-			scheduledTasks.Enqueue(task)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
+				// Requeue task
+				scheduledTasks.Enqueue(task)
+				time.Sleep(500 * time.Millisecond)
+				return
+			}
+		}()
+
 	}
 }
