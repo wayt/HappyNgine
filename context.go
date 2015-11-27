@@ -11,14 +11,14 @@ import (
 	"strings"
 )
 
-var hostname = ""
+var Hostname = ""
 
 func init() {
 
 	var err error
-	hostname, err = os.Hostname()
-	if err != nil || hostname == "" {
-		hostname = env.Get("NODE_NAME")
+	Hostname, err = os.Hostname()
+	if err != nil || Hostname == "" {
+		Hostname = env.Get("NODE_NAME")
 	}
 }
 
@@ -182,8 +182,8 @@ func (c *Context) SendByte(code int, data []byte, headers ...string) {
 		}
 	}
 
-	if hostname != "" {
-		c.Response.Header().Add("X-happyngine-node", hostname)
+	if Hostname != "" {
+		c.Response.Header().Add("X-happyngine-node", Hostname)
 	}
 
 	if !hasMime {
