@@ -132,29 +132,36 @@ func (t *Task) call(args ...interface{}) error {
 
 	ft := t.fv.Type()
 	in := []reflect.Value{}
-	for i, arg := range args {
-		var v reflect.Value
-		if arg != nil {
 
-			paramType := ft.In(i)
+	if len(args) != ft.NumIn() {
+		panic("Invalid number of argument(s)")
+	}
 
-			tmp := reflect.New(paramType)
-			mapstructure.Decode(arg, tmp.Interface())
+	if ft.NumIn() > 0 {
+		for i, arg := range args {
+			var v reflect.Value
+			if arg != nil {
 
-			v = tmp.Elem()
-		} else {
-			// Task was passed a nil argument, so we must construct
-			// the zero value for the argument here.
-			n := len(in) // we're constructing the nth argument
-			var at reflect.Type
-			if !ft.IsVariadic() || n < ft.NumIn()-1 {
-				at = ft.In(n)
+				paramType := ft.In(i)
+
+				tmp := reflect.New(paramType)
+				mapstructure.Decode(arg, tmp.Interface())
+
+				v = tmp.Elem()
 			} else {
-				at = ft.In(ft.NumIn() - 1).Elem()
+				// Task was passed a nil argument, so we must construct
+				// the zero value for the argument here.
+				n := len(in) // we're constructing the nth argument
+				var at reflect.Type
+				if !ft.IsVariadic() || n < ft.NumIn()-1 {
+					at = ft.In(n)
+				} else {
+					at = ft.In(ft.NumIn() - 1).Elem()
+				}
+				v = reflect.Zero(at)
 			}
-			v = reflect.Zero(at)
+			in = append(in, v)
 		}
-		in = append(in, v)
 	}
 
 	t.fv.Call(in)
