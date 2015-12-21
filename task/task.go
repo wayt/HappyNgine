@@ -1,6 +1,7 @@
 package task
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,46 +9,25 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/wayt/happyngine/env"
 	"github.com/wayt/happyngine/log"
-	"gopkg.in/redis.v3"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"reflect"
 	"runtime"
 	"time"
 )
 
-var redisCli *redis.Client
-var scheduledTasksKey = "scheduled_tasks" // Tasks pushed by the cli, waiting to be push in todo
-var todoTasksKey = "todo_tasks"           // Tasks pushed by the scheduler, waiting to be executed
 var tasks map[string]*Task
 var scheduledTasks *utils.LCFifo
 var logger io.Writer = os.Stdout
+var taskAPI = "http://localhost:8080"
 
 func init() {
 
-	poolSize := env.GetInt("HAPPY_REDIS_TASK_POOL_SIZE")
-	if poolSize <= 0 {
-		poolSize = 10
+	if apiUrl := env.Get("TASK_API_URL"); len(apiUrl) > 0 {
+		taskAPI = apiUrl
 	}
-
-	poolTimeout := time.Duration(env.GetInt("HAPPY_REDIS_TASK_POOL_TIMEOUT")) * time.Millisecond
-	if poolTimeout <= 0 {
-		poolTimeout = time.Second * 5
-	}
-
-	if env.Get("REDIS_TASK_PORT_6379_TCP_ADDR") == "" && env.Get("REDIS_TASK_PORT_6379_TCP_PORT") == "" {
-		log.Warningln("Unconfigured redis task...")
-		return
-	}
-
-	redisCli = redis.NewClient(&redis.Options{
-		Addr:        env.Get("REDIS_TASK_PORT_6379_TCP_ADDR") + ":" + env.Get("REDIS_TASK_PORT_6379_TCP_PORT"),
-		Password:    env.Get("HAPPY_REDIS_TASK_PASSWORD"),
-		DB:          int64(env.GetInt("HAPPY_REDIS_TASK_DB")),
-		PoolSize:    poolSize,
-		PoolTimeout: poolTimeout,
-	})
-
 	taskLogFile := env.Get("TASK_LOG_FILE")
 	if taskLogFile != "" {
 		f, err := os.OpenFile(taskLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -101,18 +81,10 @@ func New(name string, i interface{}) *Task {
 }
 
 type TaskSchedule struct {
-	Name string
-	Args []interface{}
-	Time time.Time
-}
-
-func (ts *TaskSchedule) MarshalBinary() ([]byte, error) {
-	return json.Marshal(ts)
-}
-
-func (ts *TaskSchedule) UnmarshalBinary(data []byte) error {
-
-	return json.Unmarshal(data, &ts)
+	Id     string        `json:"id,omitempty"`
+	Name   string        `json:"name"`
+	Params []interface{} `json:"params,omitempty"`
+	Time   int64         `json:"time"`
 }
 
 func (t *Task) Schedule(tm time.Time, args ...interface{}) {
@@ -120,9 +92,9 @@ func (t *Task) Schedule(tm time.Time, args ...interface{}) {
 	utc := tm.UTC()
 
 	sc := &TaskSchedule{
-		Name: t.Name,
-		Args: args,
-		Time: utc,
+		Name:   t.Name,
+		Params: args,
+		Time:   utc.Unix(),
 	}
 
 	scheduledTasks.Enqueue(sc)
@@ -169,61 +141,126 @@ func (t *Task) call(args ...interface{}) error {
 	return nil
 }
 
+func getNewTask() *TaskSchedule {
+
+	resp, err := http.Get(fmt.Sprintf("%s/tasks", taskAPI))
+	if err != nil {
+		log.Errorln("TASK: fail to get tasks:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorln("TASK: fail to read tasks:", err)
+		return nil
+	}
+
+	task := new(TaskSchedule)
+	if err := json.Unmarshal(data, task); err != nil {
+		log.Errorln("TASK: fail to unmarshal task:", err)
+		return nil
+	}
+
+	return task
+}
+
+func putTask(id, status string, err error) {
+
+	result := struct {
+		Status string `json:"status"`
+		Error  string `json:"error,omitempty"`
+	}{
+		Status: status,
+	}
+
+	if err != nil {
+		result.Error = err.Error()
+	}
+
+	data, _ := json.Marshal(result)
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/tasks/%s", taskAPI, id), bytes.NewReader(data))
+	if err != nil {
+		log.Errorln("TASK: fail to create PUT request:", err)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorln("TASK: fail to PUT task status:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+
+		data, err := ioutil.ReadAll(resp.Body)
+		log.Errorln("TASK: fail to PUT task status 2:", resp.Status, string(data), err)
+		return
+	}
+}
+
 func taskRunner() {
+
+	time.Sleep(15 * time.Second)
+
 	for {
 
-		taskName := ""
-		var startTime time.Time
-		status := 200
+		ts := getNewTask()
+		if ts == nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
 
-		func() {
+		t, ok := tasks[ts.Name]
+		if !ok {
+			log.Errorln("TASK: unknown task:", ts.Name)
+			putTask(ts.Id, "error", errors.New("Unknown task name"))
+			continue
+		}
+
+		log.Debugln("TASK: running:", ts.Name)
+		ch := make(chan error)
+		go func() {
 
 			defer func() {
 				if err := recover(); err != nil {
 
-					trace := make([]byte, 1024)
+					trace := make([]byte, 2048)
 					runtime.Stack(trace, true)
 
-					log.Criticalln("TASK:", err, string(trace))
-					status = 500
+					log.Criticalln(err, string(trace))
+					ch <- errors.New(string(trace))
+				} else {
+					ch <- nil
 				}
 			}()
 
-			task, err := redisCli.BLPop(0, todoTasksKey).Result()
-			if err != nil {
-				log.Errorln("TASK: redisCli.BLPop:", err)
-				time.Sleep(1 * time.Second)
-				return
-			}
-
-			ts := &TaskSchedule{}
-			if err := ts.UnmarshalBinary([]byte(task[1])); err != nil {
-				log.Errorln("TASK: UnmarshalBinary:", err)
-				return
-			}
-
-			taskName = ts.Name
-
-			t, ok := tasks[ts.Name]
-			if !ok {
-				log.Errorln("TASK: unknown task:", ts.Name)
-				return
-			}
-
-			log.Debugln("TASK: running:", ts.Name)
-			startTime = time.Now()
-			t.call(ts.Args...)
+			t.call(ts.Params...)
 		}()
 
-		took := time.Since(startTime)
-
-		if _, err := fmt.Fprintf(logger, "%s [%s] %d %d\n", taskName, time.Now().Format("2/Jan/2006:15:04:05 -0700"), status, took.Nanoseconds()/1000000); err != nil {
-			log.Errorln("taskRunner:", err)
+		if err := <-ch; err != nil {
+			putTask(ts.Id, "error", err)
+		} else {
+			putTask(ts.Id, "done", nil)
 		}
+
+		// took := time.Since(startTime)
+		//
+		// if _, err := fmt.Fprintf(logger, "%s [%s] %d %d\n", taskName, time.Now().Format("2/Jan/2006:15:04:05 -0700"), status, took.Nanoseconds()/1000000); err != nil {
+		// 	log.Errorln("taskRunner:", err)
+		// }
 	}
 }
 
 func taskScheduler() {
+
 	for true {
 
 		i, ok := scheduledTasks.Dequeue()
@@ -234,16 +271,34 @@ func taskScheduler() {
 
 		task := i.(*TaskSchedule)
 
-		timestamp := task.Time.Unix()
-
-		if err := redisCli.ZAdd(scheduledTasksKey, redis.Z{
-			Score:  float64(timestamp),
-			Member: task,
-		}).Err(); err != nil {
-			log.Errorln("TASK: redisCli.ZAdd:", task.Name, timestamp, err)
-
-			scheduledTasks.Enqueue(task)
-			time.Sleep(500 * time.Millisecond)
+		data, err := json.Marshal(task)
+		if err != nil {
+			log.Errorln("TASK: failed to marshal:", task, err)
+			continue
 		}
+
+		func() {
+			resp, err := http.Post(fmt.Sprintf("%s/tasks", taskAPI), "application/json", bytes.NewReader(data))
+			if err != nil {
+				log.Errorln("TASK: failed to post task:", task, err)
+
+				// Requeue task
+				scheduledTasks.Enqueue(task)
+				time.Sleep(500 * time.Millisecond)
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusCreated {
+				data, err = ioutil.ReadAll(resp.Body)
+				log.Errorln("TASK: failed to create task:", resp.Status, string(data), err)
+
+				// Requeue task
+				scheduledTasks.Enqueue(task)
+				time.Sleep(500 * time.Millisecond)
+				return
+			}
+		}()
+
 	}
 }

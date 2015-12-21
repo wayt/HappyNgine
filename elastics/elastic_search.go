@@ -108,7 +108,7 @@ type IndexResult struct {
 }
 
 // Put a document at an index
-func Index(_type, id string, obj interface{}) (*IndexResult, error) {
+func Index(_type, id string, obj interface{}, params ...string) (*IndexResult, error) {
 
 	body, err := json.Marshal(obj)
 	if err != nil {
@@ -117,10 +117,15 @@ func Index(_type, id string, obj interface{}) (*IndexResult, error) {
 
 	var req *http.Request
 
+	queryParams := ""
+	if len(params) > 0 {
+		queryParams = fmt.Sprintf("?%s", strings.Join(params, "&"))
+	}
+
 	if id == "" {
-		req, err = newRequest("POST", fmt.Sprintf("/%s/%s", Config.Index, _type), body)
+		req, err = newRequest("POST", fmt.Sprintf("/%s/%s%s", Config.Index, _type, queryParams), body)
 	} else {
-		req, err = newRequest("PUT", fmt.Sprintf("/%s/%s/%s", Config.Index, _type, id), body)
+		req, err = newRequest("PUT", fmt.Sprintf("/%s/%s/%s%s", Config.Index, _type, id, queryParams), body)
 	}
 	if err != nil {
 		return nil, err
