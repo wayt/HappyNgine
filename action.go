@@ -115,6 +115,6 @@ func (this *Action) SendByte(code int, data []byte, headers ...string) {
 	this.Context.SendByte(code, data, headers...)
 }
 
-func (this *Action) JSON(code int, obj interface{}) {
-	this.Context.JSON(code, obj)
+func (this *Action) JSON(code int, obj interface{}, headers ...string) {
+	this.Context.JSON(code, obj, headers...)
 }

@@ -151,14 +151,14 @@ func (c *Context) GetURLInt64Param(key string) int64 {
 	return value
 }
 
-func (c *Context) JSON(code int, obj interface{}) {
+func (c *Context) JSON(code int, obj interface{}, headers ...string) {
 
 	data, err := json.Marshal(obj)
 	if err != nil {
 		panic(err)
 	}
 
-	c.SendByte(code, data, "Content-Type: application/json")
+	c.SendByte(code, data, append(headers, "Content-Type: application/json")...)
 }
 
 func (c *Context) Send(code int, text string, headers ...string) {
