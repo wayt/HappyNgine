@@ -6,6 +6,7 @@ import (
 	"github.com/wayt/happyngine/env"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type TokenInfo struct {
@@ -54,9 +55,12 @@ func GetTokenInfo(token string, mobile bool) (*TokenInfo, error) {
 		return nil, err
 	}
 
-	if env.Get("GOOGLEPLUS_CLIENT_ID") != t.Aud {
-		return nil, nil
-	}
+	clients := strings.Split(env.Get("GOOGLEPLUS_CLIENT_ID"), ",")
 
-	return t, nil
+	for _, c := range clients {
+		if c == t.Aud {
+			return t, nil
+		}
+	}
+	return nil, nil
 }
